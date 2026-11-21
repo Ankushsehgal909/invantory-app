@@ -1,0 +1,116 @@
+{
+  "name": "@shopstock/mobile-app",
+  "version": "1.0.0",
+  "description": "ShopStock Mobile App - React Native",
+  "private": true,
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "build:android": "eas build --platform android",
+    "build:ios": "eas build --platform ios",
+    "build:web": "expo export --platform web",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,json,css,md}\"",
+    "postinstall": "patch-package"
+  },
+  "dependencies": {
+    "@shopstock/shared": "^1.0.0",
+    "@react-native-async-storage/async-storage": "^1.21.0",
+    "@react-navigation/bottom-tabs": "^6.5.11",
+    "@react-navigation/native": "^6.1.9",
+    "@react-navigation/native-stack": "^6.9.17",
+    "@react-navigation/stack": "^6.3.20",
+    "@tanstack/react-query": "^5.17.0",
+    "axios": "^1.6.2",
+    "date-fns": "^3.0.6",
+    "expo": "^50.0.0",
+    "expo-barcode-scanner": "^12.9.3",
+    "expo-camera": "^14.0.5",
+    "expo-file-system": "^16.0.7",
+    "expo-image-picker": "^14.7.1",
+    "expo-notifications": "^0.27.6",
+    "expo-sharing": "^11.10.0",
+    "expo-sqlite": "^13.2.0",
+    "expo-status-bar": "^1.11.1",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-hook-form": "^7.49.2",
+    "react-native": "0.73.2",
+    "react-native-chart-kit": "^6.12.0",
+    "react-native-gesture-handler": "^2.14.0",
+    "react-native-get-random-values": "^1.10.0",
+    "react-native-paper": "^5.12.0",
+    "react-native-reanimated": "^3.6.2",
+    "react-native-safe-area-context": "^4.8.2",
+    "react-native-screens": "^3.29.0",
+    "react-native-svg": "^14.1.0",
+    "react-native-web": "~0.19.6",
+    "uuid": "^9.0.1",
+    "zustand": "^4.4.7"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.23.6",
+    "@babel/preset-env": "^7.23.6",
+    "@babel/preset-react": "^7.23.3",
+    "@babel/preset-typescript": "^7.23.3",
+    "@types/jest": "^29.5.11",
+    "@types/react": "~18.2.45",
+    "@types/react-native": "^0.73.0",
+    "@types/uuid": "^9.0.7",
+    "eslint": "^8.56.0",
+    "eslint-config-expo": "^6.0.0",
+    "jest": "^29.7.0",
+    "jest-expo": "^50.0.0",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3"
+  },
+  "expo": {
+    "name": "ShopStock",
+    "slug": "shopstock",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.shopstock.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.shopstock.app",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-barcode-scanner",
+      "expo-camera",
+      "expo-notifications",
+      "expo-sqlite"
+    ]
+  }
+}

@@ -1,0 +1,683 @@
+// Prisma Schema for ShopStock
+// Database: MongoDB (using Prisma MongoDB connector)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// Enums
+// ============================================
+
+enum UserRole {
+  OWNER
+  MANAGER
+  STAFF
+  VIEWER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+}
+
+enum ProductStatus {
+  ACTIVE
+  ARCHIVED
+  DELETED
+}
+
+enum ExpiryMode {
+  NONE
+  PRODUCT_LEVEL
+  BATCH_LEVEL
+}
+
+enum UnitOfMeasure {
+  PIECE
+  PACK
+  BOX
+  KG
+  G
+  LITRE
+  ML
+  METRE
+  CM
+}
+
+enum MovementType {
+  PURCHASE
+  PURCHASE_RETURN
+  SALE
+  SALE_RETURN
+  ADJUSTMENT_IN
+  ADJUSTMENT_OUT
+  DAMAGE
+  THEFT_LOSS
+  EXPIRY_WRITE_OFF
+  OPENING_BALANCE
+  INTERNAL_USE
+  FOUND_STOCK
+  COUNTING_CORRECTION
+  TRANSFER_IN
+  TRANSFER_OUT
+}
+
+enum AdjustmentReason {
+  OPENING_BALANCE_CORRECTION
+  DAMAGE
+  EXPIRY_WRITE_OFF
+  THEFT_LOSS
+  FOUND_STOCK
+  COUNTING_CORRECTION
+  INTERNAL_USE
+  OTHER
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+}
+
+enum PaymentMethod {
+  CASH
+  UPI
+  CARD
+  BANK_TRANSFER
+  CHEQUE
+  CREDIT
+  OTHER
+}
+
+enum InvoiceStatus {
+  DRAFT
+  FINALIZED
+  CANCELLED
+  REFUNDED
+}
+
+enum DiscountType {
+  FIXED
+  PERCENTAGE
+}
+
+enum TaxType {
+  NONE
+  GST
+  VAT
+  CUSTOM
+}
+
+enum NotificationType {
+  LOW_STOCK
+  EXPIRY_SOON
+  EXPIRED
+  DAILY_SUMMARY
+  PAYMENT_RECEIVED
+  PAYMENT_OVERDUE
+  PURCHASE_DUE
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  READ
+  DISMISSED
+}
+
+enum PartyType {
+  CUSTOMER
+  SUPPLIER
+}
+
+enum LedgerEntryType {
+  DEBIT
+  CREDIT
+}
+
+enum ReferenceType {
+  PURCHASE
+  SALE
+  PAYMENT
+  CREDIT_NOTE
+  ADJUSTMENT
+  OPENING_BALANCE
+}
+
+// ============================================
+// Models
+// ============================================
+
+model Shop {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  name              String
+  address           String?
+  phone             String?
+  email             String?
+  logo              String?
+  currency          String   @default("INR")
+  timezone          String   @default("Asia/Kolkata")
+  invoicePrefix     String   @default("INV-")
+  purchasePrefix    String   @default("PUR-")
+  taxSettings       TaxSettings @embedded
+  settings          ShopSettings @embedded
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  users             User[]
+  categories        Category[]
+  products          Product[]
+  batches           Batch[]
+  suppliers         Supplier[]
+  customers         Customer[]
+  purchases         Purchase[]
+  salesInvoices     SalesInvoice[]
+  stockMovements    StockMovement[]
+  payments          Payment[]
+  customerLedger    CustomerLedgerEntry[]
+  supplierLedger    SupplierLedgerEntry[]
+  creditNotes       CreditNote[]
+  notifications     Notification[]
+  auditLogs         AuditLog[]
+
+  @@index([name])
+}
+
+type TaxSettings {
+  enabled        Boolean @default(false)
+  taxType        TaxType @default(NONE)
+  defaultTaxRate Float   @default(0)
+  taxInclusive   Boolean @default(false)
+  gstin          String?
+}
+
+type ShopSettings {
+  lowStockDefaultThreshold     Int     @default(10)
+  expiryAlertDays              Int[]   @default([90, 30, 7, 1])
+  allowNegativeStock           Boolean @default(false)
+  defaultPaymentTerms          Int     @default(30)
+  enableBatchTracking          Boolean @default(true)
+  enableExpiryTracking         Boolean @default(true)
+  currencySymbol               String  @default("₹")
+  dateFormat                   String  @default("dd/MM/yyyy")
+  numberFormat                 String  @default("en-IN")
+}
+
+model User {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  shopId       String     @db.ObjectId
+  name         String
+  phone        String?
+  email        String?
+  passwordHash String
+  role         UserRole   @default(STAFF)
+  status       UserStatus @default(ACTIVE)
+  pinHash      String?
+  avatar       String?
+  lastLoginAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  shop         Shop       @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  stockMovements StockMovement[] @relation("ActorMovements")
+  createdPurchases Purchase[] @relation("PurchaseCreator")
+  updatedPurchases Purchase[] @relation("PurchaseUpdater")
+  createdSalesInvoices SalesInvoice[] @relation("SalesInvoiceCreator")
+  updatedSalesInvoices SalesInvoice[] @relation("SalesInvoiceUpdater")
+  createdPayments Payment[] @relation("PaymentCreator")
+  createdCreditNotes CreditNote[] @relation("CreditNoteCreator")
+  auditLogs    AuditLog[] @relation("ActorAuditLogs")
+
+  @@unique([shopId, email])
+  @@unique([shopId, phone])
+  @@index([shopId])
+  @@index([shopId, role])
+}
+
+model Category {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  shopId      String    @db.ObjectId
+  name        String
+  description String?
+  parentId    String?   @db.ObjectId
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  shop        Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  parent      Category? @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Category[] @relation("CategoryHierarchy")
+  products    Product[]
+
+  @@unique([shopId, name])
+  @@index([shopId])
+  @@index([shopId, parentId])
+}
+
+model Product {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  shopId          String        @db.ObjectId
+  name            String
+  sku             String
+  barcode         String?       @unique
+  categoryId      String?       @db.ObjectId
+  brand           String?
+  description     String?
+  unit            UnitOfMeasure @default(PIECE)
+  purchaseCost    Int           // minor units (paise)
+  sellingPrice    Int           // minor units (paise)
+  taxRate         Float?        // percentage
+  reorderLevel    Int           @default(0)
+  openingStock    Float         @default(0)
+  currentStock    Float         @default(0) // computed field, updated via movements
+  expiryMode      ExpiryMode    @default(NONE)
+  status          ProductStatus @default(ACTIVE)
+  imageUrl        String?
+  weight          Float?        // for unit conversion
+  conversionFactor Float?       // e.g., 1 box = 12 pieces
+  baseUnit        UnitOfMeasure?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  createdBy       String        @db.ObjectId
+  updatedBy       String        @db.ObjectId
+
+  shop            Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  category        Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  batches         Batch[]
+  purchaseItems   PurchaseItem[]
+  salesInvoiceItems SalesInvoiceItem[]
+  stockMovements  StockMovement[]
+
+  @@unique([shopId, sku])
+  @@index([shopId])
+  @@index([shopId, categoryId])
+  @@index([shopId, status])
+  @@index([shopId, sku])
+  @@index([barcode])
+  @@index([shopId, reorderLevel, currentStock])
+}
+
+model Batch {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  productId         String   @db.ObjectId
+  batchNumber       String
+  purchaseDate      DateTime
+  expiryDate        DateTime?
+  quantityReceived  Float
+  quantityAvailable Float
+  unitCost          Int      // minor units
+  supplierId        String?  @db.ObjectId
+  purchaseId        String?  @db.ObjectId
+  isExpired         Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  supplier          Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  purchase          Purchase? @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
+  purchaseItems     PurchaseItem[]
+  salesInvoiceItems SalesInvoiceItem[]
+  stockMovements    StockMovement[]
+
+  @@unique([productId, batchNumber])
+  @@index([productId])
+  @@index([productId, expiryDate])
+  @@index([expiryDate])
+  @@index([isExpired])
+}
+
+model Supplier {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  shopId          String   @db.ObjectId
+  name            String
+  contactPerson   String?
+  phone           String?
+  email           String?
+  address         String?
+  gstin           String?
+  notes           String?
+  openingBalance  Int      @default(0) // minor units
+  currentBalance  Int      @default(0) // computed
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  shop            Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  batches         Batch[]
+  purchases       Purchase[]
+  payments        Payment[] @relation("SupplierPayments")
+  ledgerEntries   SupplierLedgerEntry[]
+
+  @@unique([shopId, name])
+  @@index([shopId])
+  @@index([shopId, isActive])
+}
+
+model Customer {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  shopId          String   @db.ObjectId
+  businessName    String
+  contactPerson   String?
+  phone           String?
+  email           String?
+  billingAddress  String?
+  shippingAddress String?
+  gstin           String?
+  notes           String?
+  openingBalance  Int      @default(0) // minor units
+  currentBalance  Int      @default(0) // computed
+  creditLimit     Int?
+  paymentTerms    Int      @default(30) // days
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  shop            Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  salesInvoices   SalesInvoice[]
+  payments        Payment[] @relation("CustomerPayments")
+  ledgerEntries   CustomerLedgerEntry[]
+  creditNotes     CreditNote[]
+
+  @@unique([shopId, businessName])
+  @@index([shopId])
+  @@index([shopId, isActive])
+}
+
+model Purchase {
+  id                     String        @id @default(auto()) @map("_id") @db.ObjectId
+  shopId                 String        @db.ObjectId
+  supplierId             String?       @db.ObjectId
+  invoiceNumber          String
+  supplierInvoiceNumber  String?
+  purchaseDate           DateTime
+  subtotal               Int           // minor units
+  discount               Int           @default(0) // minor units
+  tax                    Int           @default(0) // minor units
+  additionalCharges      Int           @default(0) // minor units
+  grandTotal             Int           // minor units
+  amountPaid             Int           @default(0) // minor units
+  balanceDue             Int           // minor units
+  paymentStatus          PaymentStatus @default(UNPAID)
+  notes                  String?
+  attachmentUrls         String[]
+  status                 InvoiceStatus @default(FINALIZED)
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  createdBy              String        @db.ObjectId
+
+  shop                   Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  supplier               Supplier?     @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  items                  PurchaseItem[]
+  payments               Payment[]     @relation("PurchasePayments")
+  batches                Batch[]
+
+  @@unique([shopId, invoiceNumber])
+  @@index([shopId])
+  @@index([shopId, supplierId])
+  @@index([shopId, purchaseDate])
+  @@index([shopId, paymentStatus])
+}
+
+model PurchaseItem {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  purchaseId    String   @db.ObjectId
+  productId     String   @db.ObjectId
+  batchId       String?  @db.ObjectId
+  quantity      Float
+  unit          UnitOfMeasure
+  unitCost      Int      // minor units
+  discount      Int      @default(0) // minor units
+  tax           Int      @default(0) // minor units
+  lineTotal     Int      // minor units
+  batchNumber   String?
+  expiryDate    DateTime?
+
+  purchase      Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  batch         Batch?   @relation(fields: [batchId], references: [id], onDelete: SetNull)
+
+  @@index([purchaseId])
+  @@index([productId])
+  @@index([batchId])
+}
+
+model SalesInvoice {
+  id                  String        @id @default(auto()) @map("_id") @db.ObjectId
+  shopId              String        @db.ObjectId
+  customerId          String?       @db.ObjectId
+  invoiceNumber       String
+  invoiceDate         DateTime
+  dueDate             DateTime?
+  subtotal            Int           // minor units
+  discount            Int           @default(0) // minor units
+  tax                 Int           @default(0) // minor units
+  additionalCharges   Int           @default(0) // minor units
+  roundingAdjustment  Int           @default(0) // minor units
+  grandTotal          Int           // minor units
+  amountPaid          Int           @default(0) // minor units
+  balanceDue          Int           // minor units
+  paymentStatus       PaymentStatus @default(UNPAID)
+  status              InvoiceStatus @default(FINALIZED)
+  notes               String?
+  terms               String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  createdBy           String        @db.ObjectId
+
+  shop                Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  customer            Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  items               SalesInvoiceItem[]
+  payments            Payment[]     @relation("SalesInvoicePayments")
+  creditNotes         CreditNote[]
+
+  @@unique([shopId, invoiceNumber])
+  @@index([shopId])
+  @@index([shopId, customerId])
+  @@index([shopId, invoiceDate])
+  @@index([shopId, paymentStatus])
+  @@index([shopId, status])
+}
+
+model SalesInvoiceItem {
+  id                 String       @id @default(auto()) @map("_id") @db.ObjectId
+  invoiceId          String       @db.ObjectId
+  productId          String       @db.ObjectId
+  batchId            String?      @db.ObjectId
+  productNameSnapshot String
+  skuSnapshot        String
+  quantity           Float
+  unit               UnitOfMeasure
+  unitPrice          Int          // minor units
+  discount           Int          @default(0) // minor units
+  discountType       DiscountType @default(FIXED)
+  tax                Int          @default(0) // minor units
+  lineTotal          Int          // minor units
+  costSnapshot       Int          // minor units - for margin calculation
+  batchNumber        String?
+  expiryDate         DateTime?
+
+  invoice            SalesInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  product            Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  batch              Batch?       @relation(fields: [batchId], references: [id], onDelete: SetNull)
+
+  @@index([invoiceId])
+  @@index([productId])
+  @@index([batchId])
+}
+
+model StockMovement {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  shopId          String         @db.ObjectId
+  productId       String         @db.ObjectId
+  batchId         String?        @db.ObjectId
+  movementType    MovementType
+  quantityDelta   Float          // positive for in, negative for out
+  quantityBefore  Float
+  quantityAfter   Float
+  referenceType   ReferenceType
+  referenceId     String         @db.ObjectId
+  reason          String?
+  actorId         String         @db.ObjectId
+  unitCost        Int?           // minor units - for valuation
+  notes           String?
+  createdAt       DateTime       @default(now())
+
+  shop            Shop           @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  product         Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  batch           Batch?         @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  actor           User           @relation("ActorMovements", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([shopId])
+  @@index([shopId, productId])
+  @@index([shopId, batchId])
+  @@index([shopId, movementType])
+  @@index([shopId, referenceType, referenceId])
+  @@index([shopId, createdAt])
+  @@index([productId, createdAt])
+}
+
+model Payment {
+  id               String        @id @default(auto()) @map("_id") @db.ObjectId
+  shopId           String        @db.ObjectId
+  partyType        PartyType
+  partyId          String        @db.ObjectId
+  referenceType    ReferenceType
+  referenceId      String        @db.ObjectId
+  amount           Int           // minor units
+  method           PaymentMethod
+  paidAt           DateTime
+  referenceNumber  String?
+  notes            String?
+  createdAt        DateTime      @default(now())
+  createdBy        String        @db.ObjectId
+
+  shop             Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  customer         Customer?     @relation("CustomerPayments", fields: [partyId], references: [id], onDelete: SetNull)
+  supplier         Supplier?     @relation("SupplierPayments", fields: [partyId], references: [id], onDelete: SetNull)
+  purchase         Purchase?     @relation("PurchasePayments", fields: [referenceId], references: [id], onDelete: SetNull)
+  salesInvoice     SalesInvoice? @relation("SalesInvoicePayments", fields: [referenceId], references: [id], onDelete: SetNull)
+  creator          User          @relation("PaymentCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+
+  @@index([shopId])
+  @@index([shopId, partyType, partyId])
+  @@index([shopId, referenceType, referenceId])
+  @@index([shopId, paidAt])
+}
+
+model CustomerLedgerEntry {
+  id            String           @id @default(auto()) @map("_id") @db.ObjectId
+  shopId        String           @db.ObjectId
+  customerId    String           @db.ObjectId
+  entryType     LedgerEntryType
+  referenceType ReferenceType
+  referenceId   String           @db.ObjectId
+  debit         Int              @default(0) // minor units
+  credit        Int              @default(0) // minor units
+  balanceAfter  Int              // minor units
+  description   String
+  createdAt     DateTime         @default(now())
+
+  shop          Shop             @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  customer      Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([shopId])
+  @@index([shopId, customerId])
+  @@index([shopId, customerId, createdAt])
+  @@index([referenceType, referenceId])
+}
+
+model SupplierLedgerEntry {
+  id            String           @id @default(auto()) @map("_id") @db.ObjectId
+  shopId        String           @db.ObjectId
+  supplierId    String           @db.ObjectId
+  entryType     LedgerEntryType
+  referenceType ReferenceType
+  referenceId   String           @db.ObjectId
+  debit         Int              @default(0) // minor units
+  credit        Int              @default(0) // minor units
+  balanceAfter  Int              // minor units
+  description   String
+  createdAt     DateTime         @default(now())
+
+  shop          Shop             @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  supplier      Supplier         @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@index([shopId])
+  @@index([shopId, supplierId])
+  @@index([shopId, supplierId, createdAt])
+  @@index([referenceType, referenceId])
+}
+
+model CreditNote {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  shopId      String        @db.ObjectId
+  invoiceId   String        @db.ObjectId
+  customerId  String        @db.ObjectId
+  amount      Int           // minor units
+  reason      String
+  status      InvoiceStatus @default(FINALIZED)
+  createdAt   DateTime      @default(now())
+  createdBy   String        @db.ObjectId
+
+  shop        Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  invoice     SalesInvoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  customer    Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  creator     User          @relation("CreditNoteCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+
+  @@index([shopId])
+  @@index([shopId, customerId])
+  @@index([invoiceId])
+}
+
+model Notification {
+  id          String             @id @default(auto()) @map("_id") @db.ObjectId
+  shopId      String             @db.ObjectId
+  type        NotificationType
+  entityId    String             @db.ObjectId
+  entityType  String
+  title       String
+  message     String
+  dueAt       DateTime?
+  status      NotificationStatus @default(PENDING)
+  readAt      DateTime?
+  createdAt   DateTime           @default(now())
+
+  shop        Shop               @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId])
+  @@index([shopId, type])
+  @@index([shopId, status])
+  @@index([shopId, dueAt])
+  @@index([entityType, entityId])
+}
+
+model AuditLog {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  shopId       String   @db.ObjectId
+  actorId      String   @db.ObjectId
+  action       String
+  entityType   String
+  entityId     String   @db.ObjectId
+  beforeJson   Json?
+  afterJson    Json?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  shop         Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  actor        User     @relation("ActorAuditLogs", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([shopId])
+  @@index([shopId, actorId])
+  @@index([shopId, entityType, entityId])
+  @@index([shopId, createdAt])
+}

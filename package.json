@@ -1,0 +1,40 @@
+{
+  "name": "shopstock-monorepo",
+  "version": "1.0.0",
+  "description": "Shop Inventory & Business Management App - Monorepo",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "web-dashboard",
+    "mobile-app",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:web\" \"npm run dev:mobile\"",
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:web": "npm run dev --workspace=web-dashboard",
+    "dev:mobile": "npm run start --workspace=mobile-app",
+    "build": "npm run build --workspaces",
+    "build:backend": "npm run build --workspace=backend",
+    "build:web": "npm run build --workspace=web-dashboard",
+    "build:mobile": "npm run build --workspace=mobile-app",
+    "test": "npm run test --workspaces",
+    "test:backend": "npm run test --workspace=backend",
+    "test:web": "npm run test --workspace=web-dashboard",
+    "test:mobile": "npm run test --workspace=mobile-app",
+    "lint": "npm run lint --workspaces",
+    "db:generate": "npm run db:generate --workspace=backend",
+    "db:push": "npm run db:push --workspace=backend",
+    "db:migrate": "npm run db:migrate --workspace=backend",
+    "db:studio": "npm run db:studio --workspace=backend",
+    "postinstall": "npm run build:shared"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "npm@10.2.4"
+}

@@ -50,9 +50,14 @@ router.put('/profile', (0, auth_1.requirePermission)('MANAGE_SHOP'), (0, errorHa
     if (!validation.success) {
         throw new errorHandler_1.ValidationError('Invalid input', { errors: validation.error.errors });
     }
+    // Convert address object to JSON string
+    const updateData = { ...validation.data };
+    if (updateData.address) {
+        updateData.address = JSON.stringify(updateData.address);
+    }
     const shop = await index_1.prisma.shop.update({
         where: { id: shopId },
-        data: validation.data,
+        data: updateData,
         select: {
             id: true,
             name: true,
@@ -126,9 +131,14 @@ router.post('/', (0, auth_1.requireRole)(constants_1.UserRole.OWNER), (0, errorH
     if (existingShop) {
         throw new errorHandler_1.ValidationError('User already has a shop');
     }
+    // Convert address object to JSON string
+    const createData = { ...validation.data };
+    if (createData.address) {
+        createData.address = JSON.stringify(createData.address);
+    }
     const shop = await index_1.prisma.shop.create({
         data: {
-            ...validation.data,
+            ...createData,
             users: { connect: { id: userId } },
         },
     });
@@ -147,13 +157,14 @@ router.get('/stats', (0, errorHandler_1.asyncHandler)(async (req, res) => {
         index_1.prisma.customer.count({ where: { shopId, isActive: true } }),
         index_1.prisma.salesInvoice.count({ where: { shopId } }),
         index_1.prisma.purchase.count({ where: { shopId } }),
-        index_1.prisma.product.count({
-            where: {
-                shopId,
-                status: 'ACTIVE',
-                currentStock: { lte: index_1.prisma.product.fields.reorderLevel },
-            },
-        }),
+        index_1.prisma.$queryRawUnsafe(`
+      SELECT COUNT(*) as count
+      FROM "Product"
+      WHERE "shopId" = $1
+        AND "status" = 'ACTIVE'
+        AND "currentStock" > 0
+        AND "currentStock" <= "reorderLevel"
+    `, shopId).then((result) => Number(result[0]?.count || 0)),
         index_1.prisma.product.count({
             where: { shopId, status: 'ACTIVE', currentStock: { lte: 0 } },
         }),

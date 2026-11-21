@@ -118,7 +118,7 @@ router.get('/export/purchases', (0, auth_1.requirePermission)('EXPORT_DATA'), (0
         where.paymentStatus = paymentStatus;
     const purchases = await index_1.prisma.purchase.findMany({
         where,
-        include: { supplier: { select: { name: true } }, items: true },
+        include: { supplier: { select: { name: true } }, items: { include: { product: { select: { name: true, sku: true } } } } },
         orderBy: { purchaseDate: 'asc' },
     });
     const csvData = purchases.flatMap(pur => pur.items.map(item => ({
@@ -171,19 +171,19 @@ router.get('/export/stock', (0, auth_1.requirePermission)('EXPORT_DATA'), (0, er
             'Unit Cost': (0, utils_1.formatCurrency)(b.unitCost),
             'Batch Value': (0, utils_1.formatCurrency)(b.quantityAvailable * b.unitCost),
             'Is Expired': b.expiryDate && new Date(b.expiryDate) < new Date() ? 'Yes' : 'No',
-            'Days to Expiry': b.expiryDate ? Math.ceil((new Date(b.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : '',
+            'Days to Expiry': b.expiryDate ? Math.ceil((new Date(b.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0,
         })) : [{
                 'Product': p.name,
                 'SKU': p.sku,
                 'Category': p.category?.name || '',
                 'Unit': p.unit,
                 'Batch Number': '',
-                'Batch Qty': '',
+                'Batch Qty': 0,
                 'Expiry Date': '',
                 'Unit Cost': '',
                 'Batch Value': '',
                 'Is Expired': '',
-                'Days to Expiry': '',
+                'Days to Expiry': 0,
             }]);
     }
     else {
@@ -363,7 +363,7 @@ router.get('/import/template/products', (0, auth_1.requirePermission)('MANAGE_PR
 // ============================================
 // Backup Database
 // ============================================
-router.post('/backup', requireRole(auth_1.UserRole.OWNER), (0, errorHandler_1.asyncHandler)(async (req, res) => {
+router.post('/backup', (0, auth_1.requireRole)(auth_1.UserRole.OWNER), (0, errorHandler_1.asyncHandler)(async (req, res) => {
     // In production, this would trigger a background job to backup the database
     // For now, return success
     (0, requestLogger_1.logAction)(req, 'BACKUP', 'Database', '');
@@ -372,7 +372,7 @@ router.post('/backup', requireRole(auth_1.UserRole.OWNER), (0, errorHandler_1.as
 // ============================================
 // Restore Database
 // ============================================
-router.post('/restore', requireRole(auth_1.UserRole.OWNER), (0, errorHandler_1.asyncHandler)(async (req, res) => {
+router.post('/restore', (0, auth_1.requireRole)(auth_1.UserRole.OWNER), (0, errorHandler_1.asyncHandler)(async (req, res) => {
     // In production, this would restore from a backup file
     // For now, return success
     (0, requestLogger_1.logAction)(req, 'RESTORE', 'Database', '');

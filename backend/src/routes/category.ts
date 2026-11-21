@@ -8,7 +8,7 @@ import { prisma } from '../index';
 import { asyncHandler, NotFoundError, ValidationError } from '../middleware/errorHandler';
 import { requirePermission, PERMISSIONS } from '../middleware/auth';
 import { createCategorySchema, updateCategorySchema } from '@shopstock/shared/validators';
-import { logCreate, logUpdate, logDelete } from '../middleware/requestLogger';
+import { logCreate, logUpdate, logDelete, logAction } from '../middleware/requestLogger';
 
 const router = Router();
 
@@ -190,16 +190,16 @@ router.put('/:id', requirePermission('MANAGE_CATEGORIES'), asyncHandler(async (r
     }
 
     // Check for circular reference
-    let currentParentId = validation.data.parentId;
+    let currentParentId: string | null = validation.data.parentId ?? null;
     while (currentParentId) {
       if (currentParentId === id) {
         throw new ValidationError('Circular reference detected');
       }
-      const parentCat = await prisma.category.findUnique({
+      const parentCat: { parentId: string | null } | null = await prisma.category.findUnique({
         where: { id: currentParentId },
         select: { parentId: true },
       });
-      currentParentId = parentCat?.parentId || null;
+      currentParentId = parentCat?.parentId ?? null;
     }
   }
 

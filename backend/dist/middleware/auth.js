@@ -7,7 +7,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PERMISSIONS = exports.requestIdMiddleware = exports.idempotencyMiddleware = exports.shopIsolationMiddleware = exports.optionalAuthMiddleware = exports.authMiddleware = void 0;
+exports.PERMISSIONS = exports.requestIdMiddleware = exports.idempotencyMiddleware = exports.shopIsolationMiddleware = exports.optionalAuthMiddleware = exports.authMiddleware = exports.UserRole = void 0;
 exports.generateAccessToken = generateAccessToken;
 exports.generateRefreshToken = generateRefreshToken;
 exports.verifyAccessToken = verifyAccessToken;
@@ -23,6 +23,7 @@ const index_1 = require("../index");
 const config_1 = require("../config");
 const errorHandler_1 = require("./errorHandler");
 const constants_1 = require("@shopstock/shared/constants");
+Object.defineProperty(exports, "UserRole", { enumerable: true, get: function () { return constants_1.UserRole; } });
 // ============================================
 // Token Utilities
 // ============================================
@@ -100,7 +101,7 @@ const authMiddleware = async (req, res, next) => {
             throw new errorHandler_1.AuthenticationError('User not found');
         }
         // Check user status
-        if (user.status !== constants_1.UserStatus.ACTIVE) {
+        if (user.status !== 'ACTIVE') {
             throw new errorHandler_1.AuthenticationError('Account is deactivated');
         }
         // Verify shop still exists
@@ -149,7 +150,7 @@ const optionalAuthMiddleware = async (req, res, next) => {
                 status: true,
             },
         });
-        if (user && user.status === constants_1.UserStatus.ACTIVE) {
+        if (user && user.status === 'ACTIVE') {
             req.user = {
                 id: user.id,
                 shopId: user.shopId,
@@ -202,9 +203,6 @@ const shopIsolationMiddleware = (req, res, next) => {
     next();
 };
 exports.shopIsolationMiddleware = shopIsolationMiddleware;
-// ============================================
-// Idempotency Middleware
-// ============================================
 const idempotencyMiddleware = async (req, res, next) => {
     const idempotencyKey = req.headers['x-idempotency-key'];
     if (!idempotencyKey) {
@@ -220,7 +218,8 @@ const idempotencyMiddleware = async (req, res, next) => {
     const existing = global.idempotencyKeys?.[idempotencyKey];
     if (existing) {
         // Return cached response
-        return res.status(existing.statusCode).json(existing.response);
+        res.status(existing.statusCode).json(existing.response);
+        return;
     }
     // Store response for future requests
     const originalJson = res.json.bind(res);
@@ -236,7 +235,7 @@ const idempotencyMiddleware = async (req, res, next) => {
         if (Object.keys(global.idempotencyKeys).length > 10000) {
             const now = Date.now();
             Object.entries(global.idempotencyKeys).forEach(([key, value]) => {
-                if (now - value.timestamp > 24 * 60 * 60 * 1000) { // 24 hours
+                if (value && now - value.timestamp > 24 * 60 * 60 * 1000) { // 24 hours
                     delete global.idempotencyKeys[key];
                 }
             });
@@ -257,10 +256,7 @@ const requestIdMiddleware = (req, res, next) => {
     next();
 };
 exports.requestIdMiddleware = requestIdMiddleware;
-// ============================================
-// Permission Check Helpers
-// ============================================
-exports.PERMISSIONS = {
+const PERMISSIONS_CONFIG = {
     // Shop management
     MANAGE_SHOP: [constants_1.UserRole.OWNER],
     MANAGE_USERS: [constants_1.UserRole.OWNER],
@@ -297,6 +293,7 @@ exports.PERMISSIONS = {
     // Notifications
     MANAGE_NOTIFICATIONS: [constants_1.UserRole.OWNER, constants_1.UserRole.MANAGER],
 };
+exports.PERMISSIONS = PERMISSIONS_CONFIG;
 function hasPermission(userRole, permission) {
     return exports.PERMISSIONS[permission].includes(userRole);
 }
@@ -306,7 +303,7 @@ function requirePermission(permission) {
             return next(new errorHandler_1.AuthenticationError());
         }
         if (!hasPermission(req.user.role, permission)) {
-            return next(new errorHandler_1.AuthorizationError(`Permission required: ${permission}`));
+            return next(new errorHandler_1.AuthorizationError(`Permission required: ${String(permission)}`));
         }
         next();
     };

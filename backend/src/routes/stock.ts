@@ -140,7 +140,8 @@ router.post('/adjustments', requirePermission('CREATE_ADJUSTMENT'), asyncHandler
   // Check for negative stock
   if (qtyAfter < 0) {
     const shop = await prisma.shop.findUnique({ where: { id: shopId }, select: { settings: true } });
-    const allowNegative = shop?.settings?.allowNegativeStock || false;
+    const settings = shop?.settings as Record<string, unknown> | null;
+    const allowNegative = settings?.allowNegativeStock === true;
     if (!allowNegative) {
       throw new BusinessLogicError('NEGATIVE_STOCK_NOT_ALLOWED', 'Insufficient stock for adjustment');
     }
@@ -283,33 +284,55 @@ router.get('/low-stock', asyncHandler(async (req, res) => {
   const shopId = (req as any).user?.shopId;
   const { page = 1, limit = 50 } = req.query;
 
-  const [products, total] = await Promise.all([
-    prisma.product.findMany({
-      where: {
-        shopId,
-        status: 'ACTIVE',
-        currentStock: { lte: prisma.product.fields.reorderLevel, gt: 0 },
-      },
-      include: {
-        category: { select: { id: true, name: true } },
-        batches: { where: { quantityAvailable: { gt: 0 } }, take: 1, orderBy: { expiryDate: 'asc' } },
-      },
-      skip: (Number(page) - 1) * Number(limit),
-      take: Number(limit),
-      orderBy: { currentStock: 'asc' },
-    }),
-    prisma.product.count({
-      where: {
-        shopId,
-        status: 'ACTIVE',
-        currentStock: { lte: prisma.product.fields.reorderLevel, gt: 0 },
-      },
-    }),
-  ]);
+  // Use raw query to compare currentStock with reorderLevel
+  const products = await (prisma as any).$queryRawUnsafe(`
+    SELECT p.*, c.name as category_name, c.id as category_id
+    FROM "Product" p
+    LEFT JOIN "Category" c ON p."categoryId" = c.id
+    WHERE p."shopId" = $1
+      AND p."status" = 'ACTIVE'
+      AND p."currentStock" > 0
+      AND p."currentStock" <= p."reorderLevel"
+    ORDER BY p."currentStock" ASC
+    LIMIT $2 OFFSET $3
+  `, shopId, Number(limit), (Number(page) - 1) * Number(limit));
+
+  const countResult = await (prisma as any).$queryRawUnsafe(`
+    SELECT COUNT(*) as total
+    FROM "Product"
+    WHERE "shopId" = $1
+      AND "status" = 'ACTIVE'
+      AND "currentStock" > 0
+      AND "currentStock" <= "reorderLevel"
+  `, shopId);
+
+  const total = Number(countResult[0]?.total || 0);
+
+  // Fetch batches for each product
+  const productIds = products.map((p: any) => p.id);
+  const batches = productIds.length > 0 ? await prisma.batch.findMany({
+    where: {
+      productId: { in: productIds },
+      quantityAvailable: { gt: 0 },
+    },
+    orderBy: { expiryDate: 'asc' },
+  }) : [];
+
+  const batchesByProduct = batches.reduce((acc: any, batch) => {
+    if (!acc[batch.productId]) acc[batch.productId] = [];
+    acc[batch.productId].push(batch);
+    return acc;
+  }, {});
+
+  const productsWithBatches = products.map((p: any) => ({
+    ...p,
+    category: p.category_id ? { id: p.category_id, name: p.category_name } : null,
+    batches: batchesByProduct[p.id]?.slice(0, 1) || [],
+  }));
 
   res.json({
     success: true,
-    data: { products },
+    data: { products: productsWithBatches },
     meta: {
       total,
       page: Number(page),

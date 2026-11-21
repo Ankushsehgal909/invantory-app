@@ -6,7 +6,7 @@
 import { Router } from 'express';
 import { prisma } from '../index';
 import { asyncHandler, ValidationError } from '../middleware/errorHandler';
-import { requirePermission, PERMISSIONS, UserRole } from '../middleware/auth';
+import { requirePermission, PERMISSIONS, UserRole, requireRole } from '../middleware/auth';
 import { logAction } from '../middleware/requestLogger';
 import { formatCurrency } from '@shopstock/shared/utils';
 import { ProductStatus, MovementType, PaymentStatus, InvoiceStatus } from '@shopstock/shared/constants';
@@ -132,7 +132,7 @@ router.get('/export/purchases', requirePermission('EXPORT_DATA'), asyncHandler(a
 
   const purchases = await prisma.purchase.findMany({
     where,
-    include: { supplier: { select: { name: true } }, items: true },
+    include: { supplier: { select: { name: true } }, items: { include: { product: { select: { name: true, sku: true } } } } },
     orderBy: { purchaseDate: 'asc' },
   });
 
@@ -196,19 +196,19 @@ router.get('/export/stock', requirePermission('EXPORT_DATA'), asyncHandler(async
         'Unit Cost': formatCurrency(b.unitCost),
         'Batch Value': formatCurrency(b.quantityAvailable * b.unitCost),
         'Is Expired': b.expiryDate && new Date(b.expiryDate) < new Date() ? 'Yes' : 'No',
-        'Days to Expiry': b.expiryDate ? Math.ceil((new Date(b.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : '',
+        'Days to Expiry': b.expiryDate ? Math.ceil((new Date(b.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0,
       })) : [{
         'Product': p.name,
         'SKU': p.sku,
         'Category': p.category?.name || '',
         'Unit': p.unit,
         'Batch Number': '',
-        'Batch Qty': '',
+        'Batch Qty': 0,
         'Expiry Date': '',
         'Unit Cost': '',
         'Batch Value': '',
         'Is Expired': '',
-        'Days to Expiry': '',
+        'Days to Expiry': 0,
       }]
     );
   } else {

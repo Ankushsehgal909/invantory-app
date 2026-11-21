@@ -16,10 +16,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@shopstock/shared": ["../shared/src"]
+      "@shopstock/shared": ["../shared/dist"]
     },
     "typeRoots": ["./node_modules/@types", "./src/types"]
   },
-  "include": ["src", "**/*.ts", "**/*.tsx", "app.config.ts"],
+  "include": ["src", "**/*.ts", "**/*.tsx", "index.js", "metro.config.js"],
   "exclude": ["node_modules", "android", "ios", "dist"]
 }

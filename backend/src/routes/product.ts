@@ -13,7 +13,7 @@ import {
   productFiltersSchema,
 } from '@shopstock/shared/validators';
 import { ProductStatus, UnitOfMeasure, ExpiryMode } from '@shopstock/shared/constants';
-import { logCreate, logUpdate, logDelete } from '../middleware/requestLogger';
+import { logCreate, logUpdate, logDelete, logAction } from '../middleware/requestLogger';
 import { formatCurrency, toMinorUnits } from '@shopstock/shared/utils';
 
 const router = Router();

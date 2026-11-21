@@ -59,9 +59,15 @@ router.put('/profile', requirePermission('MANAGE_SHOP'), asyncHandler(async (req
     throw new ValidationError('Invalid input', { errors: validation.error.errors });
   }
 
+  // Convert address object to JSON string
+  const updateData: any = { ...validation.data };
+  if (updateData.address) {
+    updateData.address = JSON.stringify(updateData.address);
+  }
+
   const shop = await prisma.shop.update({
     where: { id: shopId },
-    data: validation.data,
+    data: updateData,
     select: {
       id: true,
       name: true,
@@ -154,9 +160,15 @@ router.post('/', requireRole(UserRole.OWNER), asyncHandler(async (req, res) => {
     throw new ValidationError('User already has a shop');
   }
 
+  // Convert address object to JSON string
+  const createData: any = { ...validation.data };
+  if (createData.address) {
+    createData.address = JSON.stringify(createData.address);
+  }
+
   const shop = await prisma.shop.create({
     data: {
-      ...validation.data,
+      ...createData,
       users: { connect: { id: userId } },
     },
   });
@@ -189,13 +201,14 @@ router.get('/stats', asyncHandler(async (req, res) => {
     prisma.customer.count({ where: { shopId, isActive: true } }),
     prisma.salesInvoice.count({ where: { shopId } }),
     prisma.purchase.count({ where: { shopId } }),
-    prisma.product.count({
-      where: {
-        shopId,
-        status: 'ACTIVE',
-        currentStock: { lte: prisma.product.fields.reorderLevel },
-      },
-    }),
+    (prisma as any).$queryRawUnsafe(`
+      SELECT COUNT(*) as count
+      FROM "Product"
+      WHERE "shopId" = $1
+        AND "status" = 'ACTIVE'
+        AND "currentStock" > 0
+        AND "currentStock" <= "reorderLevel"
+    `, shopId).then((result: any) => Number(result[0]?.count || 0)),
     prisma.product.count({
       where: { shopId, status: 'ACTIVE', currentStock: { lte: 0 } },
     }),

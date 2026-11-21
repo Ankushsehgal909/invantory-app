@@ -90,8 +90,15 @@ router.post('/', (0, auth_1.requirePermission)('MANAGE_SUPPLIERS'), (0, errorHan
     const existing = await index_1.prisma.supplier.findFirst({ where: { shopId, name: validation.data.name } });
     if (existing)
         throw new errorHandler_1.ConflictError('Supplier name already exists');
+    const createData = {
+        ...validation.data,
+        shop: { connect: { id: shopId } },
+        openingBalance: (0, utils_1.toMinorUnits)(validation.data.openingBalance || 0),
+    };
+    if (validation.data.address)
+        createData.address = JSON.stringify(validation.data.address);
     const supplier = await index_1.prisma.supplier.create({
-        data: { ...validation.data, shopId, openingBalance: (0, utils_1.toMinorUnits)(validation.data.openingBalance || 0) },
+        data: createData,
     });
     // Create opening balance ledger entry if > 0
     if (validation.data.openingBalance && validation.data.openingBalance > 0) {
@@ -129,9 +136,12 @@ router.put('/:id', (0, auth_1.requirePermission)('MANAGE_SUPPLIERS'), (0, errorH
         if (existing)
             throw new errorHandler_1.ConflictError('Supplier name already exists');
     }
+    const updateData = { ...validation.data };
+    if (validation.data.address)
+        updateData.address = JSON.stringify(validation.data.address);
     const updatedSupplier = await index_1.prisma.supplier.update({
         where: { id },
-        data: validation.data,
+        data: updateData,
     });
     (0, requestLogger_1.logUpdate)(req, 'Supplier', id, {}, validation.data);
     res.json({ success: true, data: { supplier: updatedSupplier } });

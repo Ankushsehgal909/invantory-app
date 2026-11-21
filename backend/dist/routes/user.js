@@ -248,7 +248,7 @@ router.post('/:id/reset-password', (0, auth_1.requirePermission)('MANAGE_USERS')
         where: { id },
         data: { passwordHash },
     });
-    logAction(req, 'RESET_PASSWORD', 'User', id);
+    (0, requestLogger_1.logAction)(req, 'RESET_PASSWORD', 'User', id);
     res.json({ success: true, data: { message: 'Password reset successfully' } });
 }));
 exports.default = router;

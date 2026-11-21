@@ -75,6 +75,8 @@ function setupWebSocket(httpServer, prisma) {
             userId: socket.user?.userId,
             shopId: socket.shopId,
         });
+        // Set initial lastActivity
+        socket.data.lastActivity = Date.now();
         // Join shop room
         if (socket.shopId) {
             socket.join(`shop:${socket.shopId}`);

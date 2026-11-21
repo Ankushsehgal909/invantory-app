@@ -115,7 +115,7 @@ app.use('/api/v1/auth', authLimiter);
 // ============================================
 app.get('/health', async (req, res) => {
     try {
-        await exports.prisma.$queryRaw `SELECT 1`;
+        await exports.prisma.$executeRawUnsafe('SELECT 1');
         res.json({
             success: true,
             data: {
@@ -139,7 +139,7 @@ app.get('/health', async (req, res) => {
 });
 app.get('/health/ready', async (req, res) => {
     try {
-        await exports.prisma.$queryRaw `SELECT 1`;
+        await exports.prisma.$executeRawUnsafe('SELECT 1');
         res.json({ success: true, data: { ready: true } });
     }
     catch {

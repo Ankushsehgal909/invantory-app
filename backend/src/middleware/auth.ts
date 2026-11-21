@@ -9,6 +9,9 @@ import { prisma } from '../index';
 import { config } from '../config';
 import { AppError, AuthenticationError, AuthorizationError } from './errorHandler';
 import { UserRole, UserStatus, ERROR_CODES } from '@shopstock/shared/constants';
+
+// Re-export UserRole for other modules
+export { UserRole };
 import { logger } from '../utils/logger';
 
 // ============================================
@@ -46,7 +49,7 @@ export function generateAccessToken(payload: Omit<JwtPayload, 'type' | 'iat' | '
     { ...payload, type: 'access' },
     config.jwt.accessSecret,
     {
-      expiresIn: config.jwt.accessExpiry,
+      expiresIn: config.jwt.accessExpiry as jwt.SignOptions['expiresIn'],
       issuer: config.jwt.issuer,
       audience: config.jwt.audience,
     }
@@ -58,7 +61,7 @@ export function generateRefreshToken(payload: Omit<JwtPayload, 'type' | 'iat' | 
     { ...payload, type: 'refresh' },
     config.jwt.refreshSecret,
     {
-      expiresIn: config.jwt.refreshExpiry,
+      expiresIn: config.jwt.refreshExpiry as jwt.SignOptions['expiresIn'],
       issuer: config.jwt.issuer,
       audience: config.jwt.audience,
     }
@@ -138,7 +141,7 @@ export const authMiddleware = async (
     }
 
     // Check user status
-    if (user.status !== UserStatus.ACTIVE) {
+    if (user.status !== 'ACTIVE') {
       throw new AuthenticationError('Account is deactivated');
     }
 
@@ -156,7 +159,7 @@ export const authMiddleware = async (
     req.user = {
       id: user.id,
       shopId: user.shopId,
-      role: user.role,
+      role: user.role as UserRole,
       name: user.name,
     };
 
@@ -200,11 +203,11 @@ export const optionalAuthMiddleware = async (
       },
     });
 
-    if (user && user.status === UserStatus.ACTIVE) {
+    if (user && user.status === 'ACTIVE') {
       req.user = {
         id: user.id,
         shopId: user.shopId,
-        role: user.role,
+        role: user.role as UserRole,
         name: user.name,
       };
     }
@@ -271,6 +274,16 @@ export const shopIsolationMiddleware = (
 // Idempotency Middleware
 // ============================================
 
+interface IdempotencyEntry {
+  statusCode: number;
+  response: any;
+  timestamp: number;
+}
+
+declare global {
+  var idempotencyKeys: Record<string, IdempotencyEntry>;
+}
+
 export const idempotencyMiddleware = async (
   req: AuthenticatedRequest,
   res: Response,
@@ -290,15 +303,16 @@ export const idempotencyMiddleware = async (
 
   // Check if key exists (using Redis or database)
   // For now, we'll store in memory - in production use Redis
-  const existing = (global as any).idempotencyKeys?.[idempotencyKey];
+  const existing = global.idempotencyKeys?.[idempotencyKey];
   if (existing) {
     // Return cached response
-    return res.status(existing.statusCode).json(existing.response);
+    res.status(existing.statusCode).json(existing.response);
+    return;
   }
 
   // Store response for future requests
   const originalJson = res.json.bind(res);
-  res.json = (body: any) => {
+  res.json = (body: any): Response => {
     if (!global.idempotencyKeys) global.idempotencyKeys = {};
     global.idempotencyKeys[idempotencyKey] = {
       statusCode: res.statusCode,
@@ -308,8 +322,8 @@ export const idempotencyMiddleware = async (
     // Clean up old keys periodically
     if (Object.keys(global.idempotencyKeys).length > 10000) {
       const now = Date.now();
-      Object.entries(global.idempotencyKeys).forEach(([key, value]: [string, any]) => {
-        if (now - value.timestamp > 24 * 60 * 60 * 1000) { // 24 hours
+      Object.entries(global.idempotencyKeys).forEach(([key, value]: [string, IdempotencyEntry]) => {
+        if (value && now - value.timestamp > 24 * 60 * 60 * 1000) { // 24 hours
           delete global.idempotencyKeys[key];
         }
       });
@@ -341,7 +355,19 @@ export const requestIdMiddleware = (
 // Permission Check Helpers
 // ============================================
 
-export const PERMISSIONS = {
+type PermissionKey =
+  | 'MANAGE_SHOP' | 'MANAGE_USERS' | 'MANAGE_SETTINGS' | 'BACKUP_RESTORE' | 'VIEW_AUDIT_LOG'
+  | 'MANAGE_PRODUCTS' | 'MANAGE_CATEGORIES' | 'VIEW_PRODUCTS'
+  | 'MANAGE_SUPPLIERS'
+  | 'MANAGE_CUSTOMERS'
+  | 'CREATE_PURCHASE' | 'EDIT_PURCHASE' | 'DELETE_PURCHASE' | 'VIEW_PURCHASES'
+  | 'CREATE_SALE' | 'EDIT_SALE' | 'DELETE_SALE' | 'VIEW_SALES'
+  | 'MANAGE_STOCK' | 'CREATE_ADJUSTMENT'
+  | 'VIEW_REPORTS' | 'EXPORT_DATA'
+  | 'MANAGE_PAYMENTS' | 'VIEW_PAYMENTS'
+  | 'MANAGE_NOTIFICATIONS';
+
+const PERMISSIONS_CONFIG: Record<PermissionKey, UserRole[]> = {
   // Shop management
   MANAGE_SHOP: [UserRole.OWNER],
   MANAGE_USERS: [UserRole.OWNER],
@@ -386,7 +412,9 @@ export const PERMISSIONS = {
 
   // Notifications
   MANAGE_NOTIFICATIONS: [UserRole.OWNER, UserRole.MANAGER],
-} as const;
+};
+
+export const PERMISSIONS = PERMISSIONS_CONFIG;
 
 export function hasPermission(userRole: UserRole, permission: keyof typeof PERMISSIONS): boolean {
   return PERMISSIONS[permission].includes(userRole);
@@ -399,7 +427,7 @@ export function requirePermission(permission: keyof typeof PERMISSIONS) {
     }
 
     if (!hasPermission(req.user.role, permission)) {
-      return next(new AuthorizationError(`Permission required: ${permission}`));
+      return next(new AuthorizationError(`Permission required: ${String(permission)}`));
     }
 
     next();

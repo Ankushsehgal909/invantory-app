@@ -48,7 +48,6 @@ router.get('/', (0, errorHandler_1.asyncHandler)(async (req, res) => {
                 items: {
                     include: {
                         product: { select: { id: true, name: true, sku: true, unit: true } },
-                        batch: { select: { id: true, batchNumber: true } },
                     },
                 },
                 _count: { select: { items: true } },
@@ -85,7 +84,6 @@ router.get('/:id', (0, errorHandler_1.asyncHandler)(async (req, res) => {
             items: {
                 include: {
                     product: { select: { id: true, name: true, sku: true, unit: true, purchaseCost: true, sellingPrice: true } },
-                    batch: { select: { id: true, batchNumber: true, expiryDate: true, quantityAvailable: true } },
                 },
             },
             payments: {
@@ -200,8 +198,8 @@ router.post('/', (0, auth_1.requirePermission)('CREATE_PURCHASE'), (0, errorHand
             if (!inputItem)
                 continue;
             // Get or create batch
-            let batchId = inputItem.batchId;
-            if (!batchId && inputItem.batchNumber) {
+            let batchId = null;
+            if (inputItem.batchNumber) {
                 const existingBatch = await tx.batch.findFirst({
                     where: { productId: item.productId, batchNumber: inputItem.batchNumber },
                 });
@@ -221,6 +219,7 @@ router.post('/', (0, auth_1.requirePermission)('CREATE_PURCHASE'), (0, errorHand
                     const batch = await tx.batch.create({
                         data: {
                             productId: item.productId,
+                            shopId,
                             batchNumber: inputItem.batchNumber,
                             purchaseDate: new Date(purchaseData.purchaseDate),
                             expiryDate: inputItem.expiryDate ? new Date(inputItem.expiryDate) : null,
@@ -393,7 +392,7 @@ router.post('/:id/cancel', (0, auth_1.requirePermission)('DELETE_PURCHASE'), (0,
     const { reason } = req.body;
     const purchase = await index_1.prisma.purchase.findFirst({
         where: { id, shopId },
-        include: { items: { include: { batch: true } } },
+        include: { items: true },
     });
     if (!purchase) {
         throw new errorHandler_1.NotFoundError('Purchase');

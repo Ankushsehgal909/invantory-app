@@ -92,8 +92,18 @@ router.post('/', (0, auth_1.requirePermission)('MANAGE_CUSTOMERS'), (0, errorHan
     const existing = await index_1.prisma.customer.findFirst({ where: { shopId, businessName: validation.data.businessName } });
     if (existing)
         throw new errorHandler_1.ConflictError('Customer business name already exists');
+    const createData = {
+        ...validation.data,
+        shop: { connect: { id: shopId } },
+        openingBalance: (0, utils_1.toMinorUnits)(validation.data.openingBalance || 0),
+    };
+    // Convert address objects to JSON strings
+    if (validation.data.billingAddress)
+        createData.billingAddress = JSON.stringify(validation.data.billingAddress);
+    if (validation.data.shippingAddress)
+        createData.shippingAddress = JSON.stringify(validation.data.shippingAddress);
     const customer = await index_1.prisma.customer.create({
-        data: { ...validation.data, shopId, openingBalance: (0, utils_1.toMinorUnits)(validation.data.openingBalance || 0) },
+        data: createData,
     });
     // Create opening balance ledger entry if > 0
     if (validation.data.openingBalance && validation.data.openingBalance > 0) {
@@ -131,9 +141,15 @@ router.put('/:id', (0, auth_1.requirePermission)('MANAGE_CUSTOMERS'), (0, errorH
         if (existing)
             throw new errorHandler_1.ConflictError('Customer business name already exists');
     }
+    const updateData = { ...validation.data };
+    // Convert address objects to JSON strings
+    if (validation.data.billingAddress)
+        updateData.billingAddress = JSON.stringify(validation.data.billingAddress);
+    if (validation.data.shippingAddress)
+        updateData.shippingAddress = JSON.stringify(validation.data.shippingAddress);
     const updatedCustomer = await index_1.prisma.customer.update({
         where: { id },
-        data: validation.data,
+        data: updateData,
     });
     (0, requestLogger_1.logUpdate)(req, 'Customer', id, {}, validation.data);
     res.json({ success: true, data: { customer: updatedCustomer } });

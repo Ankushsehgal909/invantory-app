@@ -52,6 +52,7 @@ interface SocketData {
   user?: JwtPayload;
   shopId?: string;
   channels: Set<string>;
+  lastActivity?: number;
 }
 
 // ============================================
@@ -115,6 +116,9 @@ export function setupWebSocket(httpServer: HttpServer, prisma: PrismaClient): Se
       userId: socket.user?.userId,
       shopId: socket.shopId,
     });
+
+    // Set initial lastActivity
+    socket.data.lastActivity = Date.now();
 
     // Join shop room
     if (socket.shopId) {

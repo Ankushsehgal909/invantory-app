@@ -34,14 +34,9 @@ router.get('/dashboard', (0, errorHandler_1.asyncHandler)(async (req, res) => {
             startDate = (0, utils_1.startOfDay)();
             endDate = (0, utils_1.endOfDay)();
     }
-    const [totalProducts, totalStockUnits, stockValueAtCost, stockValueAtSale, todaySales, todaySalesCount, todayPurchases, lowStockCount, outOfStockCount, expiringSoonCount, expiredCount, totalReceivables, totalOverdueReceivables, totalPayables, recentTransactions,] = await Promise.all([
+    const [totalProducts, totalStockUnitsAgg, todaySales, todayPurchases, lowStockCount, outOfStockCount, expiringSoonCount, expiredCount, totalReceivables, totalOverdueReceivables, totalPayables, recentTransactions,] = await Promise.all([
         index_1.prisma.product.count({ where: { shopId, status: 'ACTIVE' } }),
         index_1.prisma.product.aggregate({ where: { shopId, status: 'ACTIVE' }, _sum: { currentStock: true } }),
-        index_1.prisma.product.aggregate({
-            where: { shopId, status: 'ACTIVE' },
-            _sum: { currentStock: true },
-        }).then(r => Number(r._sum.currentStock || 0) * 0), // Will calculate properly below
-        index_1.prisma.product.aggregate({ where: { shopId, status: 'ACTIVE' }, _sum: { currentStock: true } }).then(r => 0),
         index_1.prisma.salesInvoice.aggregate({
             where: { shopId, invoiceDate: { gte: startDate, lte: endDate } },
             _sum: { grandTotal: true },
@@ -50,9 +45,10 @@ router.get('/dashboard', (0, errorHandler_1.asyncHandler)(async (req, res) => {
         index_1.prisma.purchase.aggregate({
             where: { shopId, purchaseDate: { gte: startDate, lte: endDate } },
             _sum: { grandTotal: true },
+            _count: true,
         }),
         index_1.prisma.product.count({
-            where: { shopId, status: 'ACTIVE', currentStock: { lte: index_1.prisma.product.fields.reorderLevel, gt: 0 } },
+            where: { shopId, status: 'ACTIVE', currentStock: { gt: 0, lte: 1000000 } }, // Will filter by reorderLevel in code
         }),
         index_1.prisma.product.count({ where: { shopId, status: 'ACTIVE', currentStock: { lte: 0 } } }),
         index_1.prisma.batch.count({
@@ -66,10 +62,7 @@ router.get('/dashboard', (0, errorHandler_1.asyncHandler)(async (req, res) => {
             where: { product: { shopId }, expiryDate: { lt: new Date() }, quantityAvailable: { gt: 0 } },
         }),
         index_1.prisma.customer.aggregate({ where: { shopId, isActive: true }, _sum: { currentBalance: true } }),
-        index_1.prisma.customer.aggregate({
-            where: { shopId, isActive: true, currentBalance: { gt: 0 } },
-            _sum: { currentBalance: true },
-        }).then(r => 0), // Would need aging calculation
+        index_1.prisma.customer.aggregate({ where: { shopId, isActive: true, currentBalance: { gt: 0 } }, _sum: { currentBalance: true } }),
         index_1.prisma.supplier.aggregate({ where: { shopId, isActive: true }, _sum: { currentBalance: true } }),
         index_1.prisma.stockMovement.findMany({
             where: { shopId, createdAt: { gte: startDate, lte: endDate } },
@@ -83,11 +76,12 @@ router.get('/dashboard', (0, errorHandler_1.asyncHandler)(async (req, res) => {
     // Calculate stock values properly
     const products = await index_1.prisma.product.findMany({
         where: { shopId, status: 'ACTIVE' },
-        select: { currentStock: true, purchaseCost: true, sellingPrice: true },
+        select: { currentStock: true, purchaseCost: true, sellingPrice: true, reorderLevel: true },
     });
     const stockValueAtCostCalc = products.reduce((sum, p) => sum + p.currentStock * p.purchaseCost, 0);
     const stockValueAtSaleCalc = products.reduce((sum, p) => sum + p.currentStock * p.sellingPrice, 0);
     const totalStockUnitsCalc = products.reduce((sum, p) => sum + p.currentStock, 0);
+    const lowStockCountCalc = products.filter(p => p.currentStock > 0 && p.currentStock <= p.reorderLevel).length;
     res.json({
         success: true,
         data: {
@@ -99,14 +93,15 @@ router.get('/dashboard', (0, errorHandler_1.asyncHandler)(async (req, res) => {
                 todaySales: todaySales._sum.grandTotal || 0,
                 todaySalesCount: todaySales._count || 0,
                 todayPurchases: todayPurchases._sum.grandTotal || 0,
-                lowStockCount,
+                todayPurchasesCount: todayPurchases._count || 0,
+                lowStockCount: lowStockCountCalc,
                 outOfStockCount,
                 expiringSoonCount,
                 expiredCount,
                 totalReceivables: totalReceivables._sum.currentBalance || 0,
                 totalOverdueReceivables: 0, // Would need aging
                 totalPayables: totalPayables._sum.currentBalance || 0,
-                recentTransactions: recentTransactions.map(t => ({
+                recentTransactions: recentTransactions?.map(t => ({
                     id: t.id,
                     type: t.movementType.includes('SALE') ? 'SALE' : t.movementType.includes('PURCHASE') ? 'PURCHASE' : 'ADJUSTMENT',
                     referenceNumber: t.referenceId,
@@ -114,7 +109,7 @@ router.get('/dashboard', (0, errorHandler_1.asyncHandler)(async (req, res) => {
                     amount: Math.abs(t.quantityDelta) * (t.unitCost || 0),
                     partyName: t.product?.name,
                     itemCount: 1,
-                })),
+                })) || [],
             },
         },
     });
@@ -130,8 +125,10 @@ router.get('/stock', (0, errorHandler_1.asyncHandler)(async (req, res) => {
         where.status = { not: 'DELETED' };
     if (categoryId)
         where.categoryId = categoryId;
-    if (lowStockOnly === 'true')
-        where.currentStock = { lte: index_1.prisma.product.fields.reorderLevel, gt: 0 };
+    if (lowStockOnly === 'true') {
+        // We'll filter low stock in memory since we can't compare fields in where
+        where.currentStock = { gt: 0 };
+    }
     if (outOfStockOnly === 'true')
         where.currentStock = { lte: 0 };
     const [products, total] = await Promise.all([
@@ -141,13 +138,18 @@ router.get('/stock', (0, errorHandler_1.asyncHandler)(async (req, res) => {
                 category: { select: { id: true, name: true } },
                 batches: { where: { quantityAvailable: { gt: 0 } }, orderBy: { expiryDate: 'asc' } },
             },
-            skip: (Number(page) - 1) * Number(limit),
-            take: Number(limit),
             orderBy: { name: 'asc' },
         }),
         index_1.prisma.product.count({ where }),
     ]);
-    const report = products.map(p => ({
+    // Filter low stock in memory
+    let filteredProducts = products;
+    if (lowStockOnly === 'true') {
+        filteredProducts = products.filter(p => p.currentStock > 0 && p.currentStock <= p.reorderLevel);
+    }
+    // Apply pagination after filtering
+    const paginatedProducts = filteredProducts.slice((Number(page) - 1) * Number(limit), Number(page) * Number(limit));
+    const report = paginatedProducts.map(p => ({
         productId: p.id,
         productName: p.name,
         sku: p.sku,
@@ -200,6 +202,7 @@ router.get('/sales', (0, errorHandler_1.asyncHandler)(async (req, res) => {
             where,
             include: {
                 customer: { select: { id: true, businessName: true } },
+                _count: { select: { items: true } },
             },
             skip: (Number(page) - 1) * Number(limit),
             take: Number(limit),
@@ -255,7 +258,7 @@ router.get('/purchases', (0, errorHandler_1.asyncHandler)(async (req, res) => {
     const [purchases, total] = await Promise.all([
         index_1.prisma.purchase.findMany({
             where,
-            include: { supplier: { select: { id: true, name: true } } },
+            include: { supplier: { select: { id: true, name: true } }, _count: { select: { items: true } } },
             skip: (Number(page) - 1) * Number(limit),
             take: Number(limit),
             orderBy: { purchaseDate: 'desc' },

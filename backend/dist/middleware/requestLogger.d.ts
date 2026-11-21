@@ -3,6 +3,7 @@
  * Logs incoming requests with timing and context
  */
 import { Request, Response, NextFunction } from 'express';
+import { Prisma } from '@prisma/client';
 export declare const requestLogger: (req: Request, res: Response, next: NextFunction) => void;
 export interface AuditLogEntry {
     actorId: string;
@@ -10,8 +11,8 @@ export interface AuditLogEntry {
     action: string;
     entityType: string;
     entityId: string;
-    beforeJson?: Record<string, unknown>;
-    afterJson?: Record<string, unknown>;
+    beforeJson?: Prisma.InputJsonValue;
+    afterJson?: Prisma.InputJsonValue;
     ipAddress?: string;
     userAgent?: string;
 }

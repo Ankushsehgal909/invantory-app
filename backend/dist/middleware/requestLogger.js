@@ -58,7 +58,7 @@ exports.requestLogger = requestLogger;
 async function createAuditLog(entry) {
     try {
         // Import prisma dynamically to avoid circular dependency
-        const { prisma } = await import('../index');
+        const { prisma } = await import('../index.js');
         await prisma.auditLog.create({
             data: entry,
         });

@@ -4,6 +4,7 @@
  */
 import { Request, Response, NextFunction } from 'express';
 import { UserRole } from '@shopstock/shared/constants';
+export { UserRole };
 export interface JwtPayload {
     userId: string;
     shopId: string;
@@ -35,35 +36,18 @@ export declare function requireRole(...allowedRoles: UserRole[]): (req: Authenti
 export declare function requireOwnerOrManager(): (req: AuthenticatedRequest, res: Response, next: NextFunction) => void;
 export declare function requireOwner(): (req: AuthenticatedRequest, res: Response, next: NextFunction) => void;
 export declare const shopIsolationMiddleware: (req: AuthenticatedRequest, res: Response, next: NextFunction) => void;
+interface IdempotencyEntry {
+    statusCode: number;
+    response: any;
+    timestamp: number;
+}
+declare global {
+    var idempotencyKeys: Record<string, IdempotencyEntry>;
+}
 export declare const idempotencyMiddleware: (req: AuthenticatedRequest, res: Response, next: NextFunction) => Promise<void>;
 export declare const requestIdMiddleware: (req: Request, res: Response, next: NextFunction) => void;
-export declare const PERMISSIONS: {
-    readonly MANAGE_SHOP: readonly [UserRole.OWNER];
-    readonly MANAGE_USERS: readonly [UserRole.OWNER];
-    readonly MANAGE_SETTINGS: readonly [UserRole.OWNER];
-    readonly BACKUP_RESTORE: readonly [UserRole.OWNER];
-    readonly VIEW_AUDIT_LOG: readonly [UserRole.OWNER];
-    readonly MANAGE_PRODUCTS: readonly [UserRole.OWNER, UserRole.MANAGER];
-    readonly MANAGE_CATEGORIES: readonly [UserRole.OWNER, UserRole.MANAGER];
-    readonly VIEW_PRODUCTS: readonly [UserRole.OWNER, UserRole.MANAGER, UserRole.STAFF, UserRole.VIEWER];
-    readonly MANAGE_SUPPLIERS: readonly [UserRole.OWNER, UserRole.MANAGER];
-    readonly MANAGE_CUSTOMERS: readonly [UserRole.OWNER, UserRole.MANAGER];
-    readonly CREATE_PURCHASE: readonly [UserRole.OWNER, UserRole.MANAGER];
-    readonly EDIT_PURCHASE: readonly [UserRole.OWNER, UserRole.MANAGER];
-    readonly DELETE_PURCHASE: readonly [UserRole.OWNER];
-    readonly VIEW_PURCHASES: readonly [UserRole.OWNER, UserRole.MANAGER, UserRole.STAFF, UserRole.VIEWER];
-    readonly CREATE_SALE: readonly [UserRole.OWNER, UserRole.MANAGER, UserRole.STAFF];
-    readonly EDIT_SALE: readonly [UserRole.OWNER, UserRole.MANAGER];
-    readonly DELETE_SALE: readonly [UserRole.OWNER];
-    readonly VIEW_SALES: readonly [UserRole.OWNER, UserRole.MANAGER, UserRole.STAFF, UserRole.VIEWER];
-    readonly MANAGE_STOCK: readonly [UserRole.OWNER, UserRole.MANAGER];
-    readonly CREATE_ADJUSTMENT: readonly [UserRole.OWNER, UserRole.MANAGER, UserRole.STAFF];
-    readonly VIEW_REPORTS: readonly [UserRole.OWNER, UserRole.MANAGER, UserRole.VIEWER];
-    readonly EXPORT_DATA: readonly [UserRole.OWNER, UserRole.MANAGER, UserRole.VIEWER];
-    readonly MANAGE_PAYMENTS: readonly [UserRole.OWNER, UserRole.MANAGER];
-    readonly VIEW_PAYMENTS: readonly [UserRole.OWNER, UserRole.MANAGER, UserRole.VIEWER];
-    readonly MANAGE_NOTIFICATIONS: readonly [UserRole.OWNER, UserRole.MANAGER];
-};
+type PermissionKey = 'MANAGE_SHOP' | 'MANAGE_USERS' | 'MANAGE_SETTINGS' | 'BACKUP_RESTORE' | 'VIEW_AUDIT_LOG' | 'MANAGE_PRODUCTS' | 'MANAGE_CATEGORIES' | 'VIEW_PRODUCTS' | 'MANAGE_SUPPLIERS' | 'MANAGE_CUSTOMERS' | 'CREATE_PURCHASE' | 'EDIT_PURCHASE' | 'DELETE_PURCHASE' | 'VIEW_PURCHASES' | 'CREATE_SALE' | 'EDIT_SALE' | 'DELETE_SALE' | 'VIEW_SALES' | 'MANAGE_STOCK' | 'CREATE_ADJUSTMENT' | 'VIEW_REPORTS' | 'EXPORT_DATA' | 'MANAGE_PAYMENTS' | 'VIEW_PAYMENTS' | 'MANAGE_NOTIFICATIONS';
+export declare const PERMISSIONS: Record<PermissionKey, UserRole[]>;
 export declare function hasPermission(userRole: UserRole, permission: keyof typeof PERMISSIONS): boolean;
 export declare function requirePermission(permission: keyof typeof PERMISSIONS): (req: AuthenticatedRequest, res: Response, next: NextFunction) => void;
 //# sourceMappingURL=auth.d.ts.map

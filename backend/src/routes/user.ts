@@ -11,7 +11,7 @@ import { asyncHandler, NotFoundError, ValidationError, ConflictError } from '../
 import { requireRole, requirePermission, UserRole } from '../middleware/auth';
 import { createUserSchema, updateUserSchema } from '@shopstock/shared/validators';
 import { UserStatus } from '@shopstock/shared/constants';
-import { logCreate, logUpdate, logDelete } from '../middleware/requestLogger';
+import { logCreate, logUpdate, logDelete, logAction } from '../middleware/requestLogger';
 
 const router = Router();
 

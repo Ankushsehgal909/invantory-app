@@ -4,6 +4,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import { Prisma } from '@prisma/client';
 import { logger } from '../utils/logger';
 
 // ============================================
@@ -71,8 +72,8 @@ export interface AuditLogEntry {
   action: string;
   entityType: string;
   entityId: string;
-  beforeJson?: Record<string, unknown>;
-  afterJson?: Record<string, unknown>;
+  beforeJson?: Prisma.InputJsonValue;
+  afterJson?: Prisma.InputJsonValue;
   ipAddress?: string;
   userAgent?: string;
 }
@@ -80,7 +81,7 @@ export interface AuditLogEntry {
 export async function createAuditLog(entry: AuditLogEntry): Promise<void> {
   try {
     // Import prisma dynamically to avoid circular dependency
-    const { prisma } = await import('../index');
+    const { prisma } = await import('../index.js');
     await prisma.auditLog.create({
       data: entry,
     });
@@ -108,7 +109,7 @@ export function logCreate(
     action: 'CREATE',
     entityType,
     entityId,
-    afterJson: afterData,
+    afterJson: afterData as Prisma.InputJsonValue,
     ipAddress: req.ip,
     userAgent: req.get('user-agent'),
   });
@@ -129,8 +130,8 @@ export function logUpdate(
     action: 'UPDATE',
     entityType,
     entityId,
-    beforeJson: beforeData,
-    afterJson: afterData,
+    beforeJson: beforeData as Prisma.InputJsonValue,
+    afterJson: afterData as Prisma.InputJsonValue,
     ipAddress: req.ip,
     userAgent: req.get('user-agent'),
   });
@@ -150,7 +151,7 @@ export function logDelete(
     action: 'DELETE',
     entityType,
     entityId,
-    beforeJson: beforeData,
+    beforeJson: beforeData as Prisma.InputJsonValue,
     ipAddress: req.ip,
     userAgent: req.get('user-agent'),
   });
@@ -171,7 +172,7 @@ export function logAction(
     action,
     entityType,
     entityId,
-    afterJson: data,
+    afterJson: data as Prisma.InputJsonValue,
     ipAddress: req.ip,
     userAgent: req.get('user-agent'),
   });

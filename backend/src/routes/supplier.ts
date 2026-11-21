@@ -101,8 +101,15 @@ router.post('/', requirePermission('MANAGE_SUPPLIERS'), asyncHandler(async (req,
   const existing = await prisma.supplier.findFirst({ where: { shopId, name: validation.data.name } });
   if (existing) throw new ConflictError('Supplier name already exists');
 
+  const createData: any = {
+    ...validation.data,
+    shop: { connect: { id: shopId } },
+    openingBalance: toMinorUnits(validation.data.openingBalance || 0),
+  };
+  if (validation.data.address) createData.address = JSON.stringify(validation.data.address);
+
   const supplier = await prisma.supplier.create({
-    data: { ...validation.data, shopId, openingBalance: toMinorUnits(validation.data.openingBalance || 0) },
+    data: createData,
   });
 
   // Create opening balance ledger entry if > 0
@@ -146,9 +153,12 @@ router.put('/:id', requirePermission('MANAGE_SUPPLIERS'), asyncHandler(async (re
     if (existing) throw new ConflictError('Supplier name already exists');
   }
 
+  const updateData: any = { ...validation.data };
+  if (validation.data.address) updateData.address = JSON.stringify(validation.data.address);
+
   const updatedSupplier = await prisma.supplier.update({
     where: { id },
-    data: validation.data,
+    data: updateData,
   });
 
   logUpdate(req, 'Supplier', id, {}, validation.data);

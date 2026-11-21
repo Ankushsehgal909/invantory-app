@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
+import * as Keychain from 'react-native-keychain';
 import { api } from '../services/api';
 import { User, Shop } from '@shopstock/shared/types';
 
@@ -15,8 +15,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const ACCESS_TOKEN_KEY = 'accessToken';
-const REFRESH_TOKEN_KEY = 'refreshToken';
+const KEYCHAIN_SERVICE = 'shopstock';
+const ACCESS_TOKEN_ACCOUNT = 'accessToken';
+const REFRESH_TOKEN_ACCOUNT = 'refreshToken';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -29,8 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(response.data.data.user);
     } catch {
       setUser(null);
-      await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
-      await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+      await Keychain.resetGenericPassword({ service: KEYCHAIN_SERVICE });
       delete api.defaults.headers.common['Authorization'];
     }
   }, []);
@@ -39,8 +39,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const response = await api.post('/auth/login', { phone, password, shopId });
     const { user: userData, accessToken, refreshToken, shop: shopData } = response.data.data;
 
-    await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
-    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
+    await Keychain.setGenericPassword(ACCESS_TOKEN_ACCOUNT, accessToken, { service: KEYCHAIN_SERVICE });
+    await Keychain.setGenericPassword(REFRESH_TOKEN_ACCOUNT, refreshToken, { service: KEYCHAIN_SERVICE });
     api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
 
     setUser(userData);
@@ -48,8 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
-    await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+    await Keychain.resetGenericPassword({ service: KEYCHAIN_SERVICE });
     delete api.defaults.headers.common['Authorization'];
     setUser(null);
     setShop(null);
@@ -57,8 +56,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const initAuth = async () => {
-      const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-      const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+      const accessTokenCreds = await Keychain.getGenericPassword({ service: KEYCHAIN_SERVICE, account: ACCESS_TOKEN_ACCOUNT });
+      const refreshTokenCreds = await Keychain.getGenericPassword({ service: KEYCHAIN_SERVICE, account: REFRESH_TOKEN_ACCOUNT });
+
+      const accessToken = accessTokenCreds?.password;
+      const refreshToken = refreshTokenCreds?.password;
 
       if (accessToken) {
         api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
@@ -69,8 +71,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             try {
               const response = await api.post('/auth/refresh', { refreshToken });
               const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data.data;
-              await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, newAccessToken);
-              await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, newRefreshToken);
+              await Keychain.setGenericPassword(ACCESS_TOKEN_ACCOUNT, newAccessToken, { service: KEYCHAIN_SERVICE });
+              await Keychain.setGenericPassword(REFRESH_TOKEN_ACCOUNT, newRefreshToken, { service: KEYCHAIN_SERVICE });
               api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
               await refreshUser();
             } catch {

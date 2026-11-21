@@ -28,7 +28,7 @@ router.get('/live', (0, errorHandler_1.asyncHandler)(async (req, res) => {
 router.get('/ready', (0, errorHandler_1.asyncHandler)(async (req, res) => {
     try {
         // Check database connection
-        await index_1.prisma.$queryRaw `SELECT 1`;
+        await index_1.prisma.$executeRawUnsafe('SELECT 1');
         res.json({
             success: true,
             data: {
@@ -63,7 +63,7 @@ router.get('/', (0, errorHandler_1.asyncHandler)(async (req, res) => {
     let dbLatency = 0;
     try {
         const dbStart = Date.now();
-        await index_1.prisma.$queryRaw `SELECT 1`;
+        await index_1.prisma.$executeRawUnsafe('SELECT 1');
         dbLatency = Date.now() - dbStart;
     }
     catch {

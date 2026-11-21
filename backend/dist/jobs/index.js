@@ -20,7 +20,8 @@ async function checkLowStock(context) {
             select: { id: true, settings: true },
         });
         for (const shop of shops) {
-            const threshold = shop.settings?.lowStockDefaultThreshold || 10;
+            const settings = shop.settings;
+            const threshold = settings.lowStockDefaultThreshold || 10;
             const lowStockProducts = await prisma.product.findMany({
                 where: {
                     shopId: shop.id,
@@ -75,7 +76,8 @@ async function checkExpiry(context) {
         });
         const now = new Date();
         for (const shop of shops) {
-            const alertDays = shop.settings?.expiryAlertDays || [90, 30, 7, 1];
+            const settings = shop.settings;
+            const alertDays = settings.expiryAlertDays || [90, 30, 7, 1];
             // Check for expiring soon
             for (const days of alertDays) {
                 const targetDate = (0, utils_1.addDays)(now, days);
@@ -83,8 +85,8 @@ async function checkExpiry(context) {
                     where: {
                         product: { shopId: shop.id },
                         expiryDate: {
-                            gte: startOfDay(targetDate),
-                            lte: endOfDay(targetDate),
+                            gte: (0, utils_1.startOfDay)(targetDate),
+                            lte: (0, utils_1.endOfDay)(targetDate),
                         },
                         quantityAvailable: { gt: 0 },
                         isExpired: false,
@@ -259,7 +261,14 @@ async function sendDailySummary(context) {
                     _sum: { grandTotal: true },
                     _count: true,
                 }),
-                prisma.product.count({ where: { shopId: shop.id, status: 'ACTIVE', currentStock: { lte: prisma.product.fields.reorderLevel, gt: 0 } } }),
+                prisma.$queryRawUnsafe(`
+          SELECT COUNT(*) as count
+          FROM "Product"
+          WHERE "shopId" = $1
+            AND "status" = 'ACTIVE'
+            AND "currentStock" > 0
+            AND "currentStock" <= "reorderLevel"
+        `, shop.id).then((result) => Number(result[0]?.count || 0)),
                 prisma.batch.count({ where: { product: { shopId: shop.id }, expiryDate: { gte: new Date(), lte: (0, utils_1.addDays)(new Date(), 30) }, quantityAvailable: { gt: 0 } } }),
             ]);
             for (const userId of recipientIds) {
@@ -366,16 +375,5 @@ function scheduleDaily(fn, hour, minute) {
         fn();
         setInterval(fn, 24 * 60 * 60 * 1000);
     }, delay);
-}
-// Need to import these from shared utils
-function startOfDay(date) {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    return d;
-}
-function endOfDay(date) {
-    const d = new Date(date);
-    d.setHours(23, 59, 59, 999);
-    return d;
 }
 //# sourceMappingURL=index.js.map

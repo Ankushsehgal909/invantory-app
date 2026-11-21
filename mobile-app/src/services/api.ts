@@ -1,7 +1,7 @@
 import axios from 'axios';
-import Constants from 'expo-constants';
+import * as Keychain from 'react-native-keychain';
 
-const API_URL = Constants.expoConfig?.extra?.apiUrl || 'http://localhost:4000/api/v1';
+const API_URL = __DEV__ ? 'http://10.0.2.2:4000/api/v1' : 'https://api.shopstock.app/api/v1';
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -10,6 +10,10 @@ export const api = axios.create({
   },
   timeout: 30000,
 });
+
+const KEYCHAIN_SERVICE = 'shopstock';
+const ACCESS_TOKEN_ACCOUNT = 'accessToken';
+const REFRESH_TOKEN_ACCOUNT = 'refreshToken';
 
 // Request interceptor
 api.interceptors.request.use(
@@ -31,23 +35,25 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      const { SecureStore } = await import('expo-secure-store');
-      const refreshToken = await SecureStore.getItemAsync('refreshToken');
+      const refreshTokenCreds = await Keychain.getGenericPassword({
+        service: KEYCHAIN_SERVICE,
+        account: REFRESH_TOKEN_ACCOUNT,
+      });
+      const refreshToken = refreshTokenCreds?.password;
 
       if (refreshToken) {
         try {
           const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
           const { accessToken, refreshToken: newRefreshToken } = response.data.data;
 
-          await SecureStore.setItemAsync('accessToken', accessToken);
-          await SecureStore.setItemAsync('refreshToken', newRefreshToken);
+          await Keychain.setGenericPassword(ACCESS_TOKEN_ACCOUNT, accessToken, { service: KEYCHAIN_SERVICE });
+          await Keychain.setGenericPassword(REFRESH_TOKEN_ACCOUNT, newRefreshToken, { service: KEYCHAIN_SERVICE });
           api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
 
           originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
           return api(originalRequest);
         } catch {
-          await SecureStore.deleteItemAsync('accessToken');
-          await SecureStore.deleteItemAsync('refreshToken');
+          await Keychain.resetGenericPassword({ service: KEYCHAIN_SERVICE });
           delete api.defaults.headers.common['Authorization'];
         }
       }

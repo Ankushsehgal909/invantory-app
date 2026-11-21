@@ -7,7 +7,7 @@ import { Router } from 'express';
 import { prisma } from '../index';
 import { asyncHandler, NotFoundError, ValidationError } from '../middleware/errorHandler';
 import { requirePermission, PERMISSIONS } from '../middleware/auth';
-import { logCreate, logUpdate, logDelete } from '../middleware/requestLogger';
+import { logCreate, logUpdate, logDelete, logAction } from '../middleware/requestLogger';
 import { formatCurrency, toMinorUnits } from '@shopstock/shared/utils';
 
 const router = Router();
@@ -140,6 +140,7 @@ router.post('/', requirePermission('MANAGE_STOCK'), asyncHandler(async (req, res
   const batch = await prisma.batch.create({
     data: {
       productId,
+      shopId,
       batchNumber,
       purchaseDate: new Date(purchaseDate),
       expiryDate: expiryDate ? new Date(expiryDate) : null,
@@ -204,12 +205,12 @@ router.delete('/:id', requirePermission('MANAGE_STOCK'), asyncHandler(async (req
 
   const batch = await prisma.batch.findFirst({
     where: { id, product: { shopId } },
-    include: { _count: { select: { purchaseItems: true, salesInvoiceItems: true, stockMovements: true } } },
+    include: { _count: { select: { salesInvoiceItems: true, stockMovements: true } } },
   });
 
   if (!batch) throw new NotFoundError('Batch');
 
-  if (batch._count.purchaseItems > 0 || batch._count.salesInvoiceItems > 0 || batch._count.stockMovements > 0) {
+  if (batch._count.salesInvoiceItems > 0 || batch._count.stockMovements > 0) {
     throw new ValidationError('Cannot delete batch with transaction history');
   }
 

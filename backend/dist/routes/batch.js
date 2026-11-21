@@ -126,6 +126,7 @@ router.post('/', (0, auth_1.requirePermission)('MANAGE_STOCK'), (0, errorHandler
     const batch = await index_1.prisma.batch.create({
         data: {
             productId,
+            shopId,
             batchNumber,
             purchaseDate: new Date(purchaseDate),
             expiryDate: expiryDate ? new Date(expiryDate) : null,
@@ -180,11 +181,11 @@ router.delete('/:id', (0, auth_1.requirePermission)('MANAGE_STOCK'), (0, errorHa
     const { id } = req.params;
     const batch = await index_1.prisma.batch.findFirst({
         where: { id, product: { shopId } },
-        include: { _count: { select: { purchaseItems: true, salesInvoiceItems: true, stockMovements: true } } },
+        include: { _count: { select: { salesInvoiceItems: true, stockMovements: true } } },
     });
     if (!batch)
         throw new errorHandler_1.NotFoundError('Batch');
-    if (batch._count.purchaseItems > 0 || batch._count.salesInvoiceItems > 0 || batch._count.stockMovements > 0) {
+    if (batch._count.salesInvoiceItems > 0 || batch._count.stockMovements > 0) {
         throw new errorHandler_1.ValidationError('Cannot delete batch with transaction history');
     }
     await index_1.prisma.batch.delete({ where: { id } });
@@ -241,7 +242,7 @@ router.post('/:id/write-off', (0, auth_1.requirePermission)('MANAGE_STOCK'), (0,
             data: { quantityAvailable: 0, isExpired: true },
         });
     });
-    logAction(req, 'WRITE_OFF', 'Batch', id, { reason });
+    (0, requestLogger_1.logAction)(req, 'WRITE_OFF', 'Batch', id, { reason });
     res.json({ success: true, data: { message: 'Batch written off successfully' } });
 }));
 exports.default = router;

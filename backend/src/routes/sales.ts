@@ -174,6 +174,14 @@ router.post('/', requirePermission('CREATE_SALE'), asyncHandler(async (req, res)
   let totalDiscount = 0;
   let totalTax = 0;
 
+  // Fetch product details for snapshots
+  const productIds = items.map(item => item.productId);
+  const products = await prisma.product.findMany({
+    where: { id: { in: productIds } },
+    select: { id: true, name: true, sku: true, purchaseCost: true },
+  });
+  const productMap = new Map(products.map(p => [p.id, p]));
+
   for (const item of items) {
     const lineSubtotal = item.quantity * item.unitPrice;
     subtotal += lineSubtotal;
@@ -251,14 +259,19 @@ router.post('/', requirePermission('CREATE_SALE'), asyncHandler(async (req, res)
         paymentStatus,
         createdBy: userId,
         items: {
-          create: items.map(item => ({
-            ...item,
-            unitPrice: toMinorUnits(item.unitPrice),
-            discount: toMinorUnits(item.discount || 0),
-            tax: toMinorUnits(item.tax || 0),
-            lineTotal: toMinorUnits(item.quantity * item.unitPrice - calculateDiscount(item.quantity * item.unitPrice, item.discount || 0, item.discountType || DiscountType.FIXED) + (item.tax || 0)),
-            costSnapshot: toMinorUnits(item.unitPrice * 0.7), // Placeholder - should use actual cost
-          })),
+          create: items.map(item => {
+            const product = productMap.get(item.productId);
+            return {
+              ...item,
+              unitPrice: toMinorUnits(item.unitPrice),
+              discount: toMinorUnits(item.discount || 0),
+              tax: toMinorUnits(item.tax || 0),
+              lineTotal: toMinorUnits(item.quantity * item.unitPrice - calculateDiscount(item.quantity * item.unitPrice, item.discount || 0, item.discountType || DiscountType.FIXED) + (item.tax || 0)),
+              costSnapshot: product ? toMinorUnits(product.purchaseCost) : toMinorUnits(item.unitPrice * 0.7),
+              productNameSnapshot: product?.name || '',
+              skuSnapshot: product?.sku || '',
+            };
+          }),
         },
       },
       include: { items: true },

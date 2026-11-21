@@ -155,7 +155,7 @@ router.put('/:id', (0, auth_1.requirePermission)('MANAGE_CATEGORIES'), (0, error
             throw new errorHandler_1.ValidationError('Parent category not found');
         }
         // Check for circular reference
-        let currentParentId = validation.data.parentId;
+        let currentParentId = validation.data.parentId ?? null;
         while (currentParentId) {
             if (currentParentId === id) {
                 throw new errorHandler_1.ValidationError('Circular reference detected');
@@ -164,7 +164,7 @@ router.put('/:id', (0, auth_1.requirePermission)('MANAGE_CATEGORIES'), (0, error
                 where: { id: currentParentId },
                 select: { parentId: true },
             });
-            currentParentId = parentCat?.parentId || null;
+            currentParentId = parentCat?.parentId ?? null;
         }
     }
     const updatedCategory = await index_1.prisma.category.update({
@@ -213,7 +213,7 @@ router.post('/reorder', (0, auth_1.requirePermission)('MANAGE_CATEGORIES'), (0, 
         where: { id, shopId },
         data: { sortOrder, parentId },
     })));
-    logAction(req, 'REORDER', 'Category', categoryOrders.map(c => c.id).join(','));
+    (0, requestLogger_1.logAction)(req, 'REORDER', 'Category', categoryOrders.map(c => c.id).join(','));
     res.json({ success: true, data: { message: 'Categories reordered successfully' } });
 }));
 exports.default = router;

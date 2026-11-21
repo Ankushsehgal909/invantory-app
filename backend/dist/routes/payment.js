@@ -187,7 +187,7 @@ router.delete('/:id', (0, auth_1.requirePermission)('MANAGE_PAYMENTS'), (0, erro
         throw new errorHandler_1.NotFoundError('Payment');
     await index_1.prisma.$transaction(async (tx) => {
         // Reverse balances
-        if (payment.partyType === constants_1.PartyType.CUSTOMER && payment.referenceType === constants_1.ReferenceType.SALE) {
+        if (payment.partyType === constants_1.PartyType.CUSTOMER && payment.referenceType === constants_1.ReferenceType.SALE && payment.referenceId && payment.partyId) {
             const invoice = await tx.salesInvoice.findUnique({ where: { id: payment.referenceId } });
             if (invoice) {
                 const newAmountPaid = invoice.amountPaid - payment.amount;
@@ -201,7 +201,7 @@ router.delete('/:id', (0, auth_1.requirePermission)('MANAGE_PAYMENTS'), (0, erro
                 await tx.customer.update({ where: { id: payment.partyId }, data: { currentBalance: { increment: payment.amount } } });
             }
         }
-        else if (payment.partyType === constants_1.PartyType.SUPPLIER && payment.referenceType === constants_1.ReferenceType.PURCHASE) {
+        else if (payment.partyType === constants_1.PartyType.SUPPLIER && payment.referenceType === constants_1.ReferenceType.PURCHASE && payment.referenceId && payment.partyId) {
             const purchase = await tx.purchase.findUnique({ where: { id: payment.referenceId } });
             if (purchase) {
                 const newAmountPaid = purchase.amountPaid - payment.amount;

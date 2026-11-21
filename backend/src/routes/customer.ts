@@ -103,8 +103,17 @@ router.post('/', requirePermission('MANAGE_CUSTOMERS'), asyncHandler(async (req,
   const existing = await prisma.customer.findFirst({ where: { shopId, businessName: validation.data.businessName } });
   if (existing) throw new ConflictError('Customer business name already exists');
 
+  const createData: any = {
+    ...validation.data,
+    shop: { connect: { id: shopId } },
+    openingBalance: toMinorUnits(validation.data.openingBalance || 0),
+  };
+  // Convert address objects to JSON strings
+  if (validation.data.billingAddress) createData.billingAddress = JSON.stringify(validation.data.billingAddress);
+  if (validation.data.shippingAddress) createData.shippingAddress = JSON.stringify(validation.data.shippingAddress);
+
   const customer = await prisma.customer.create({
-    data: { ...validation.data, shopId, openingBalance: toMinorUnits(validation.data.openingBalance || 0) },
+    data: createData,
   });
 
   // Create opening balance ledger entry if > 0
@@ -148,9 +157,14 @@ router.put('/:id', requirePermission('MANAGE_CUSTOMERS'), asyncHandler(async (re
     if (existing) throw new ConflictError('Customer business name already exists');
   }
 
+  const updateData: any = { ...validation.data };
+  // Convert address objects to JSON strings
+  if (validation.data.billingAddress) updateData.billingAddress = JSON.stringify(validation.data.billingAddress);
+  if (validation.data.shippingAddress) updateData.shippingAddress = JSON.stringify(validation.data.shippingAddress);
+
   const updatedCustomer = await prisma.customer.update({
     where: { id },
-    data: validation.data,
+    data: updateData,
   });
 
   logUpdate(req, 'Customer', id, {}, validation.data);

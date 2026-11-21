@@ -185,6 +185,6 @@ export const apiHelpers = {
   getShopSettings: () => api.get('/shop/settings'),
   updateShopSettings: (data: any) => api.put('/shop/settings', data),
   getShopStats: () => api.get('/shop/stats'),
-});
+};
 
 export default api;

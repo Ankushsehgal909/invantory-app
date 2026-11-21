@@ -10,7 +10,7 @@ import { config } from '../config';
 import { asyncHandler, AppError, ValidationError, AuthenticationError } from '../middleware/errorHandler';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../middleware/auth';
 import { loginSchema, changePasswordSchema } from '@shopstock/shared/validators';
-import { ERROR_CODES, HTTP_STATUS, UserStatus } from '@shopstock/shared/constants';
+import { ERROR_CODES, HTTP_STATUS, UserStatus, UserRole } from '@shopstock/shared/constants';
 import { logger } from '../utils/logger';
 import { logAction } from '../middleware/requestLogger';
 
@@ -73,13 +73,13 @@ router.post('/login', asyncHandler(async (req: Request, res: Response) => {
   const accessToken = generateAccessToken({
     userId: user.id,
     shopId: user.shopId,
-    role: user.role,
+    role: user.role as UserRole,
   });
 
   const refreshToken = generateRefreshToken({
     userId: user.id,
     shopId: user.shopId,
-    role: user.role,
+    role: user.role as UserRole,
   });
 
   // Log login
@@ -138,13 +138,13 @@ router.post('/refresh', asyncHandler(async (req: Request, res: Response) => {
   const newAccessToken = generateAccessToken({
     userId: user.id,
     shopId: user.shopId,
-    role: user.role,
+    role: user.role as UserRole,
   });
 
   const newRefreshToken = generateRefreshToken({
     userId: user.id,
     shopId: user.shopId,
-    role: user.role,
+    role: user.role as UserRole,
   });
 
   res.json({

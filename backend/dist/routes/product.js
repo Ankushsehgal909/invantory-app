@@ -390,7 +390,7 @@ router.post('/bulk-update', (0, auth_1.requirePermission)('MANAGE_PRODUCTS'), (0
         where: { id: { in: ids }, shopId },
         data: updateData,
     });
-    logAction(req, 'BULK_UPDATE', 'Product', ids.join(','), { updates: updateData, count: result.count });
+    (0, requestLogger_1.logAction)(req, 'BULK_UPDATE', 'Product', ids.join(','), { updates: updateData, count: result.count });
     res.json({ success: true, data: { updatedCount: result.count } });
 }));
 // ============================================

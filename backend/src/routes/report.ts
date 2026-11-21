@@ -409,19 +409,23 @@ router.get('/receivables', asyncHandler(async (req, res) => {
     // Aging buckets
     const now = new Date();
     const notDue = invoices.filter(inv => !inv.dueDate || new Date(inv.dueDate) >= now);
-    const days1_30 = invoices.filter(inv => inv.dueDate && {
+    const days1_30 = invoices.filter(inv => {
+      if (!inv.dueDate) return false;
       const diff = (now.getTime() - new Date(inv.dueDate).getTime()) / (1000 * 60 * 60 * 24);
       return diff >= 0 && diff <= 30;
     });
-    const days31_60 = invoices.filter(inv => inv.dueDate && {
+    const days31_60 = invoices.filter(inv => {
+      if (!inv.dueDate) return false;
       const diff = (now.getTime() - new Date(inv.dueDate).getTime()) / (1000 * 60 * 60 * 24);
       return diff > 30 && diff <= 60;
     });
-    const days61_90 = invoices.filter(inv => inv.dueDate && {
+    const days61_90 = invoices.filter(inv => {
+      if (!inv.dueDate) return false;
       const diff = (now.getTime() - new Date(inv.dueDate).getTime()) / (1000 * 60 * 60 * 24);
       return diff > 60 && diff <= 90;
     });
-    const days90Plus = invoices.filter(inv => inv.dueDate && {
+    const days90Plus = invoices.filter(inv => {
+      if (!inv.dueDate) return false;
       const diff = (now.getTime() - new Date(inv.dueDate).getTime()) / (1000 * 60 * 60 * 24);
       return diff > 90;
     });

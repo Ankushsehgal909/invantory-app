@@ -2,6 +2,27 @@
  * Shared Constants for ShopStock
  */
 
+// Re-export enums from types
+export {
+  UserRole,
+  UserStatus,
+  ProductStatus,
+  ExpiryMode,
+  UnitOfMeasure,
+  MovementType,
+  AdjustmentReason,
+  PaymentStatus,
+  PaymentMethod,
+  InvoiceStatus,
+  DiscountType,
+  TaxType,
+  NotificationType,
+  NotificationStatus,
+  PartyType,
+  LedgerEntryType,
+  ReferenceType,
+} from '../types';
+
 // ============================================
 // Application Constants
 // ============================================

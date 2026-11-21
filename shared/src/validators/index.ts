@@ -127,10 +127,12 @@ export const paginationSchema = z.object({
 export type PaginationInput = z.infer<typeof paginationSchema>;
 
 // Date Range
-export const dateRangeSchema = z.object({
+const dateRangeBaseSchema = z.object({
   startDate: dateStringSchema,
   endDate: dateStringSchema,
-}).refine(data => new Date(data.startDate) <= new Date(data.endDate), {
+});
+
+export const dateRangeSchema = dateRangeBaseSchema.refine(data => new Date(data.startDate) <= new Date(data.endDate), {
   message: 'Start date must be before or equal to end date',
   path: ['endDate'],
 });
@@ -237,7 +239,7 @@ export const updateCategorySchema = createCategorySchema.partial().omit({ shopId
 // Product Validators
 // ============================================
 
-export const createProductSchema = z.object({
+const createProductBaseSchema = z.object({
   shopId: shopIdSchema,
   name: productNameSchema,
   sku: skuSchema,
@@ -256,7 +258,9 @@ export const createProductSchema = z.object({
   weight: z.number().positive().optional(),
   conversionFactor: z.number().positive().optional(),
   baseUnit: unitOfMeasureSchema.optional(),
-}).refine(data => {
+});
+
+export const createProductSchema = createProductBaseSchema.refine(data => {
   if (data.conversionFactor && !data.baseUnit) {
     return false;
   }
@@ -266,7 +270,7 @@ export const createProductSchema = z.object({
   path: ['baseUnit'],
 });
 
-export const updateProductSchema = createProductSchema.partial().omit({ shopId: true }).extend({
+export const updateProductSchema = createProductBaseSchema.partial().omit({ shopId: true }).extend({
   status: productStatusSchema.optional(),
 });
 
@@ -388,7 +392,7 @@ export const createSalesInvoiceItemSchema = z.object({
   batchId: batchIdSchema.optional(),
 });
 
-export const createSalesInvoiceSchema = z.object({
+const createSalesInvoiceBaseSchema = z.object({
   shopId: shopIdSchema,
   customerId: customerIdSchema.optional(),
   invoiceDate: dateStringSchema,
@@ -403,7 +407,9 @@ export const createSalesInvoiceSchema = z.object({
   paymentMethod: paymentMethodSchema.optional(),
   notes: z.string().max(1000).optional(),
   terms: z.string().max(1000).optional(),
-}).refine(data => {
+});
+
+export const createSalesInvoiceSchema = createSalesInvoiceBaseSchema.refine(data => {
   if (data.dueDate && new Date(data.dueDate) < new Date(data.invoiceDate)) {
     return false;
   }
@@ -413,7 +419,7 @@ export const createSalesInvoiceSchema = z.object({
   path: ['dueDate'],
 });
 
-export const updateSalesInvoiceSchema = createSalesInvoiceSchema.partial().omit({ shopId: true }).extend({
+export const updateSalesInvoiceSchema = createSalesInvoiceBaseSchema.partial().omit({ shopId: true }).extend({
   status: invoiceStatusSchema.optional(),
 });
 
@@ -488,7 +494,7 @@ export const createCreditNoteSchema = z.object({
 // Report Validators
 // ============================================
 
-export const stockReportFiltersSchema = dateRangeSchema.extend({
+export const stockReportFiltersSchema = dateRangeBaseSchema.extend({
   categoryId: categoryIdSchema.optional(),
   productId: productIdSchema.optional(),
   lowStockOnly: z.boolean().optional(),
@@ -496,14 +502,14 @@ export const stockReportFiltersSchema = dateRangeSchema.extend({
   includeArchived: z.boolean().default(false),
 });
 
-export const salesReportFiltersSchema = dateRangeSchema.extend({
+export const salesReportFiltersSchema = dateRangeBaseSchema.extend({
   customerId: customerIdSchema.optional(),
   paymentStatus: paymentStatusSchema.optional(),
   minAmount: minorUnitsSchema.optional(),
   maxAmount: minorUnitsSchema.optional(),
 });
 
-export const purchaseReportFiltersSchema = dateRangeSchema.extend({
+export const purchaseReportFiltersSchema = dateRangeBaseSchema.extend({
   supplierId: supplierIdSchema.optional(),
   paymentStatus: paymentStatusSchema.optional(),
   minAmount: minorUnitsSchema.optional(),

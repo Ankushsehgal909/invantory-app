@@ -167,8 +167,8 @@ model Shop {
   timezone          String   @default("Asia/Kolkata")
   invoicePrefix     String   @default("INV-")
   purchasePrefix    String   @default("PUR-")
-  taxSettings       TaxSettings @embedded
-  settings          ShopSettings @embedded
+  taxSettings       Json
+  settings          Json
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -229,9 +229,7 @@ model User {
   shop         Shop       @relation(fields: [shopId], references: [id], onDelete: Cascade)
   stockMovements StockMovement[] @relation("ActorMovements")
   createdPurchases Purchase[] @relation("PurchaseCreator")
-  updatedPurchases Purchase[] @relation("PurchaseUpdater")
   createdSalesInvoices SalesInvoice[] @relation("SalesInvoiceCreator")
-  updatedSalesInvoices SalesInvoice[] @relation("SalesInvoiceUpdater")
   createdPayments Payment[] @relation("PaymentCreator")
   createdCreditNotes CreditNote[] @relation("CreditNoteCreator")
   auditLogs    AuditLog[] @relation("ActorAuditLogs")
@@ -253,8 +251,8 @@ model Category {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  shop        Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  parent      Category? @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  shop        Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  parent      Category? @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   children    Category[] @relation("CategoryHierarchy")
   products    Product[]
 
@@ -290,25 +288,24 @@ model Product {
   createdBy       String        @db.ObjectId
   updatedBy       String        @db.ObjectId
 
-  shop            Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  category        Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  batches         Batch[]
-  purchaseItems   PurchaseItem[]
-  salesInvoiceItems SalesInvoiceItem[]
-  stockMovements  StockMovement[]
+  shop            Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  category        Category?     @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  batches         Batch[]       @relation("ProductBatches")
+  purchaseItems   PurchaseItem[] @relation("ProductPurchaseItems")
+  salesInvoiceItems SalesInvoiceItem[] @relation("ProductSalesInvoiceItems")
+  stockMovements  StockMovement[] @relation("ProductStockMovements")
 
   @@unique([shopId, sku])
   @@index([shopId])
   @@index([shopId, categoryId])
   @@index([shopId, status])
-  @@index([shopId, sku])
-  @@index([barcode])
   @@index([shopId, reorderLevel, currentStock])
 }
 
 model Batch {
   id                String   @id @default(auto()) @map("_id") @db.ObjectId
   productId         String   @db.ObjectId
+  shopId            String   @db.ObjectId
   batchNumber       String
   purchaseDate      DateTime
   expiryDate        DateTime?
@@ -321,15 +318,14 @@ model Batch {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product           Product  @relation("ProductBatches", fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  shop              Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   supplier          Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
   purchase          Purchase? @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
-  purchaseItems     PurchaseItem[]
-  salesInvoiceItems SalesInvoiceItem[]
-  stockMovements    StockMovement[]
 
   @@unique([productId, batchNumber])
   @@index([productId])
+  @@index([shopId])
   @@index([productId, expiryDate])
   @@index([expiryDate])
   @@index([isExpired])
@@ -351,7 +347,7 @@ model Supplier {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  shop            Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  shop            Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   batches         Batch[]
   purchases       Purchase[]
   payments        Payment[] @relation("SupplierPayments")
@@ -381,7 +377,7 @@ model Customer {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  shop            Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  shop            Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   salesInvoices   SalesInvoice[]
   payments        Payment[] @relation("CustomerPayments")
   ledgerEntries   CustomerLedgerEntry[]
@@ -414,11 +410,12 @@ model Purchase {
   updatedAt              DateTime      @updatedAt
   createdBy              String        @db.ObjectId
 
-  shop                   Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  shop                   Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   supplier               Supplier?     @relation(fields: [supplierId], references: [id], onDelete: SetNull)
   items                  PurchaseItem[]
   payments               Payment[]     @relation("PurchasePayments")
   batches                Batch[]
+  creator                User          @relation("PurchaseCreator", fields: [createdBy], references: [id], onDelete: Restrict)
 
   @@unique([shopId, invoiceNumber])
   @@index([shopId])
@@ -442,8 +439,7 @@ model PurchaseItem {
   expiryDate    DateTime?
 
   purchase      Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
-  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  batch         Batch?   @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  product       Product  @relation("ProductPurchaseItems", fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([purchaseId])
   @@index([productId])
@@ -473,11 +469,12 @@ model SalesInvoice {
   updatedAt           DateTime      @updatedAt
   createdBy           String        @db.ObjectId
 
-  shop                Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  shop                Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   customer            Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
   items               SalesInvoiceItem[]
   payments            Payment[]     @relation("SalesInvoicePayments")
   creditNotes         CreditNote[]
+  creator             User          @relation("SalesInvoiceCreator", fields: [createdBy], references: [id], onDelete: Restrict)
 
   @@unique([shopId, invoiceNumber])
   @@index([shopId])
@@ -506,8 +503,7 @@ model SalesInvoiceItem {
   expiryDate         DateTime?
 
   invoice            SalesInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  product            Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
-  batch              Batch?       @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  product            Product      @relation("ProductSalesInvoiceItems", fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([invoiceId])
   @@index([productId])
@@ -531,9 +527,8 @@ model StockMovement {
   notes           String?
   createdAt       DateTime       @default(now())
 
-  shop            Shop           @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  product         Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
-  batch           Batch?         @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  shop            Shop           @relation(fields: [shopId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  product         Product        @relation("ProductStockMovements", fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   actor           User           @relation("ActorMovements", fields: [actorId], references: [id], onDelete: Restrict)
 
   @@index([shopId])
@@ -549,9 +544,9 @@ model Payment {
   id               String        @id @default(auto()) @map("_id") @db.ObjectId
   shopId           String        @db.ObjectId
   partyType        PartyType
-  partyId          String        @db.ObjectId
+  partyId          String?       @db.ObjectId
   referenceType    ReferenceType
-  referenceId      String        @db.ObjectId
+  referenceId      String?       @db.ObjectId
   amount           Int           // minor units
   method           PaymentMethod
   paidAt           DateTime
@@ -561,10 +556,10 @@ model Payment {
   createdBy        String        @db.ObjectId
 
   shop             Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  customer         Customer?     @relation("CustomerPayments", fields: [partyId], references: [id], onDelete: SetNull)
-  supplier         Supplier?     @relation("SupplierPayments", fields: [partyId], references: [id], onDelete: SetNull)
-  purchase         Purchase?     @relation("PurchasePayments", fields: [referenceId], references: [id], onDelete: SetNull)
-  salesInvoice     SalesInvoice? @relation("SalesInvoicePayments", fields: [referenceId], references: [id], onDelete: SetNull)
+  customer         Customer?     @relation("CustomerPayments", fields: [partyId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  supplier         Supplier?     @relation("SupplierPayments", fields: [partyId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  purchase         Purchase?     @relation("PurchasePayments", fields: [referenceId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  salesInvoice     SalesInvoice? @relation("SalesInvoicePayments", fields: [referenceId], references: [id], onDelete: SetNull, onUpdate: NoAction)
   creator          User          @relation("PaymentCreator", fields: [createdBy], references: [id], onDelete: Restrict)
 
   @@index([shopId])

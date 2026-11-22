@@ -217,6 +217,14 @@ export const loginSchema = z.object({
   shopId: shopIdSchema.optional(),
 });
 
+export const registerSchema = z.object({
+  name: z.string().min(1).max(100),
+  phone: phoneSchema,
+  email: emailSchema.optional(),
+  password: passwordSchema,
+  shopName: z.string().min(1).max(200),
+});
+
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1),
   newPassword: passwordSchema,
@@ -579,6 +587,7 @@ export type UpdateShopInput = z.infer<typeof updateShopSchema>;
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type RegisterInput = z.infer<typeof registerSchema>;
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
 export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;
 export type CreateProductInput = z.infer<typeof createProductSchema>;

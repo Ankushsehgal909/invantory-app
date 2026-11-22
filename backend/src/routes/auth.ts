@@ -7,9 +7,9 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../index';
 import { config } from '../config';
-import { asyncHandler, AppError, ValidationError, AuthenticationError } from '../middleware/errorHandler';
+import { asyncHandler, AppError, ValidationError, AuthenticationError, ConflictError } from '../middleware/errorHandler';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../middleware/auth';
-import { loginSchema, changePasswordSchema } from '@shopstock/shared/validators';
+import { loginSchema, changePasswordSchema, registerSchema } from '@shopstock/shared/validators';
 import { ERROR_CODES, HTTP_STATUS, UserStatus, UserRole } from '@shopstock/shared/constants';
 import { logger } from '../utils/logger';
 import { logAction } from '../middleware/requestLogger';
@@ -102,6 +102,123 @@ router.post('/login', asyncHandler(async (req: Request, res: Response) => {
       accessToken,
       refreshToken,
       shop: user.shop,
+    },
+  });
+}));
+
+// ============================================
+// Register (Create new shop + owner)
+// ============================================
+
+router.post('/register', asyncHandler(async (req: Request, res: Response) => {
+  const validation = registerSchema.safeParse(req.body);
+  if (!validation.success) {
+    throw new ValidationError('Invalid input', { errors: validation.error.errors });
+  }
+
+  const { name, phone, email, password, shopName } = validation.data;
+
+  // Check if phone already exists
+  const existingPhone = await prisma.user.findFirst({
+    where: { phone },
+  });
+
+  if (existingPhone) {
+    throw new ConflictError('Phone number already registered');
+  }
+
+  // Check if email already exists (if provided)
+  if (email) {
+    const existingEmail = await prisma.user.findFirst({
+      where: { email },
+    });
+
+    if (existingEmail) {
+      throw new ConflictError('Email already registered');
+    }
+  }
+
+  // Hash password
+  const passwordHash = await bcrypt.hash(password, config.security.bcryptRounds);
+
+  // Create shop and owner user in a transaction
+  const result = await prisma.$transaction(async (tx) => {
+    // Create shop
+    const shop = await tx.shop.create({
+      data: {
+        name: shopName,
+        currency: 'INR',
+        timezone: 'Asia/Kolkata',
+        invoicePrefix: 'INV-',
+        purchasePrefix: 'PUR-',
+        taxSettings: {
+          enabled: false,
+          taxType: 'NONE',
+          defaultTaxRate: 0,
+          taxInclusive: false,
+          gstin: '',
+        },
+        settings: {
+          lowStockDefaultThreshold: 10,
+          expiryAlertDays: [90, 30, 7, 1],
+          allowNegativeStock: false,
+          defaultPaymentTerms: 30,
+          enableBatchTracking: true,
+          enableExpiryTracking: true,
+          currencySymbol: '₹',
+          dateFormat: 'dd/MM/yyyy',
+          numberFormat: 'en-IN',
+        },
+      },
+    });
+
+    // Create owner user
+    const user = await tx.user.create({
+      data: {
+        shopId: shop.id,
+        name,
+        phone,
+        email,
+        passwordHash,
+        role: UserRole.OWNER,
+        status: UserStatus.ACTIVE,
+      },
+      select: {
+        id: true,
+        shopId: true,
+        name: true,
+        phone: true,
+        email: true,
+        role: true,
+        avatar: true,
+      },
+    });
+
+    return { user, shop };
+  });
+
+  // Generate tokens
+  const accessToken = generateAccessToken({
+    userId: result.user.id,
+    shopId: result.user.shopId,
+    role: result.user.role as UserRole,
+  });
+
+  const refreshToken = generateRefreshToken({
+    userId: result.user.id,
+    shopId: result.user.shopId,
+    role: result.user.role as UserRole,
+  });
+
+  logger.info('New shop and owner registered', { userId: result.user.id, shopId: result.shop.id });
+
+  res.status(201).json({
+    success: true,
+    data: {
+      user: result.user,
+      accessToken,
+      refreshToken,
+      shop: result.shop,
     },
   });
 }));

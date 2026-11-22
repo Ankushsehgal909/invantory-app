@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Package, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -134,8 +134,10 @@ export function Login() {
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-500">
-              Demo credentials: <br />
-              <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">owner@shopstock / password123</span>
+              Don't have an account?{' '}
+              <Link to="/register" className="font-medium text-primary-500 hover:text-primary-600">
+                Create one
+              </Link>
             </p>
           </div>
         </div>

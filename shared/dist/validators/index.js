@@ -147,6 +147,13 @@ export const loginSchema = z.object({
     password: z.string().min(1),
     shopId: shopIdSchema.optional(),
 });
+export const registerSchema = z.object({
+    name: z.string().min(1).max(100),
+    phone: phoneSchema,
+    email: emailSchema.optional(),
+    password: passwordSchema,
+    shopName: z.string().min(1).max(200),
+});
 export const changePasswordSchema = z.object({
     currentPassword: z.string().min(1),
     newPassword: passwordSchema,

@@ -97,6 +97,108 @@ router.post('/login', (0, errorHandler_1.asyncHandler)(async (req, res) => {
     });
 }));
 // ============================================
+// Register (Create new shop + owner)
+// ============================================
+router.post('/register', (0, errorHandler_1.asyncHandler)(async (req, res) => {
+    const validation = validators_1.registerSchema.safeParse(req.body);
+    if (!validation.success) {
+        throw new errorHandler_1.ValidationError('Invalid input', { errors: validation.error.errors });
+    }
+    const { name, phone, email, password, shopName } = validation.data;
+    // Check if phone already exists
+    const existingPhone = await index_1.prisma.user.findFirst({
+        where: { phone },
+    });
+    if (existingPhone) {
+        throw new errorHandler_1.ConflictError('Phone number already registered');
+    }
+    // Check if email already exists (if provided)
+    if (email) {
+        const existingEmail = await index_1.prisma.user.findFirst({
+            where: { email },
+        });
+        if (existingEmail) {
+            throw new errorHandler_1.ConflictError('Email already registered');
+        }
+    }
+    // Hash password
+    const passwordHash = await bcryptjs_1.default.hash(password, config_1.config.security.bcryptRounds);
+    // Create shop and owner user in a transaction
+    const result = await index_1.prisma.$transaction(async (tx) => {
+        // Create shop
+        const shop = await tx.shop.create({
+            data: {
+                name: shopName,
+                currency: 'INR',
+                timezone: 'Asia/Kolkata',
+                invoicePrefix: 'INV-',
+                purchasePrefix: 'PUR-',
+                taxSettings: {
+                    enabled: false,
+                    taxType: 'NONE',
+                    defaultTaxRate: 0,
+                    taxInclusive: false,
+                    gstin: '',
+                },
+                settings: {
+                    lowStockDefaultThreshold: 10,
+                    expiryAlertDays: [90, 30, 7, 1],
+                    allowNegativeStock: false,
+                    defaultPaymentTerms: 30,
+                    enableBatchTracking: true,
+                    enableExpiryTracking: true,
+                    currencySymbol: '₹',
+                    dateFormat: 'dd/MM/yyyy',
+                    numberFormat: 'en-IN',
+                },
+            },
+        });
+        // Create owner user
+        const user = await tx.user.create({
+            data: {
+                shopId: shop.id,
+                name,
+                phone,
+                email,
+                passwordHash,
+                role: constants_1.UserRole.OWNER,
+                status: constants_1.UserStatus.ACTIVE,
+            },
+            select: {
+                id: true,
+                shopId: true,
+                name: true,
+                phone: true,
+                email: true,
+                role: true,
+                avatar: true,
+            },
+        });
+        return { user, shop };
+    });
+    // Generate tokens
+    const accessToken = (0, auth_1.generateAccessToken)({
+        userId: result.user.id,
+        shopId: result.user.shopId,
+        role: result.user.role,
+    });
+    const refreshToken = (0, auth_1.generateRefreshToken)({
+        userId: result.user.id,
+        shopId: result.user.shopId,
+        role: result.user.role,
+    });
+    logger_1.logger.info('New shop and owner registered', { userId: result.user.id, shopId: result.shop.id });
+    res.status(201).json({
+        success: true,
+        data: {
+            user: result.user,
+            accessToken,
+            refreshToken,
+            shop: result.shop,
+        },
+    });
+}));
+// ============================================
 // Refresh Token
 // ============================================
 router.post('/refresh', (0, errorHandler_1.asyncHandler)(async (req, res) => {

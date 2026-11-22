@@ -133,8 +133,9 @@ export function LoginScreen() {
         </View>
 
         <View style={styles.demoText}>
-          <Text style={styles.demoLabel}>Demo credentials:</Text>
-          <Text style={styles.demoValue}>owner@shopstock / password123</Text>
+          <Text style={styles.demoLabel}>No demo user seeded:</Text>
+          <Text style={styles.demoValue}>Create a user via API or seed script first</Text>
+          <Text style={{...styles.demoValue, color: '#64748b', fontSize: 12, marginTop: 4}}>(Login expects a registered phone number)</Text>
         </View>
       </View>
     </KeyboardAvoidingView>

@@ -512,6 +512,25 @@ export declare const loginSchema: z.ZodObject<{
     password: string;
     shopId?: string | undefined;
 }>;
+export declare const registerSchema: z.ZodObject<{
+    name: z.ZodString;
+    phone: z.ZodString;
+    email: z.ZodOptional<z.ZodString>;
+    password: z.ZodString;
+    shopName: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    name: string;
+    phone: string;
+    password: string;
+    shopName: string;
+    email?: string | undefined;
+}, {
+    name: string;
+    phone: string;
+    password: string;
+    shopName: string;
+    email?: string | undefined;
+}>;
 export declare const changePasswordSchema: z.ZodObject<{
     currentPassword: z.ZodString;
     newPassword: z.ZodString;
@@ -1862,6 +1881,7 @@ export type UpdateShopInput = z.infer<typeof updateShopSchema>;
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type RegisterInput = z.infer<typeof registerSchema>;
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
 export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;
 export type CreateProductInput = z.infer<typeof createProductSchema>;

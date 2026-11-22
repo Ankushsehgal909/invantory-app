@@ -240,6 +240,10 @@ export interface Product {
   updatedAt: Date;
   createdBy: string;
   updatedBy: string;
+  // Extended fields for API responses
+  category?: Category;
+  batches?: Batch[];
+  _count?: { batches: number };
 }
 
 export interface Batch {
@@ -273,6 +277,10 @@ export interface Supplier {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  // Extended fields for API responses
+  outstandingBalance?: number; // alias for currentBalance
+  totalPurchases?: number;
+  purchases?: Purchase[];
 }
 
 export interface Customer {
@@ -293,6 +301,10 @@ export interface Customer {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  // Extended fields for API responses
+  outstandingBalance?: number; // alias for currentBalance
+  totalPurchases?: number;
+  salesInvoices?: SalesInvoice[];
 }
 
 export interface Purchase {
@@ -316,6 +328,10 @@ export interface Purchase {
   createdAt: Date;
   updatedAt: Date;
   createdBy: string;
+  // Extended fields for API responses
+  supplier?: Supplier;
+  items?: PurchaseItem[];
+  _count?: { items: number };
 }
 
 export interface PurchaseItem {
@@ -355,6 +371,11 @@ export interface SalesInvoice {
   createdAt: Date;
   updatedAt: Date;
   createdBy: string;
+  // Extended fields for API responses
+  customer?: Customer;
+  items?: SalesInvoiceItem[];
+  payments?: Payment[];
+  _count?: { items: number };
 }
 
 export interface SalesInvoiceItem {
@@ -436,6 +457,23 @@ export interface SupplierLedgerEntry {
   balanceAfter: number; // minor units
   description: string;
   createdAt: Date;
+}
+
+// Generic ledger entry for combined reports
+export interface LedgerEntry {
+  id: string;
+  date: Date;
+  type: LedgerEntryType; // DEBIT or CREDIT
+  referenceType: ReferenceType;
+  referenceId: string;
+  referenceNumber?: string;
+  invoiceNumber?: string;
+  amount: number; // minor units
+  runningBalance: number; // minor units
+  description: string;
+  partyType: PartyType; // CUSTOMER or SUPPLIER
+  partyId: string;
+  partyName: string;
 }
 
 export interface CreditNote {

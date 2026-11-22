@@ -1,10 +1,10 @@
-import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Menu, X, Bell, User, LogOut, ChevronDown, Home, Package, ShoppingCart, Users, Truck, FileText, Settings, AlertCircle, ChevronRight } from 'lucide-react';
+import { Menu, X, Bell, User, LogOut, ChevronDown, Home, Package, ShoppingCart, Users, Truck, FileText, Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '../services/api';
+import { api, apiHelpers } from '../services/api';
 import { Notification } from '@shopstock/shared/types';
 
 const navigation = [
@@ -19,9 +19,8 @@ const navigation = [
 ];
 
 export function Layout() {
-  const { user, shop, logout, refreshUser } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -31,7 +30,7 @@ export function Layout() {
   // Fetch notifications
   const { data: notificationsData, refetch: refetchNotifications } = useQuery({
     queryKey: ['notifications'],
-    queryFn: () => api.get('/notifications', { params: { limit: 10 } }),
+    queryFn: () => apiHelpers.getNotifications({ limit: 10 }),
     select: (response) => response.data.data.notifications,
     refetchInterval: 30000,
     enabled: !!user,
@@ -40,7 +39,7 @@ export function Layout() {
   useEffect(() => {
     if (notificationsData) {
       setNotifications(notificationsData);
-      setUnreadCount(notificationsData.filter(n => n.status === 'PENDING' || n.status === 'SENT').length);
+      setUnreadCount(notificationsData.filter((n: Notification) => n.status === 'PENDING' || n.status === 'SENT').length);
     }
   }, [notificationsData]);
 
@@ -121,8 +120,6 @@ export function Layout() {
           {/* Navigation */}
           <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
             {navigation.map((item) => {
-              const isActive = location.pathname === item.href ||
-                (item.href !== '/' && location.pathname.startsWith(item.href));
               return (
                 <NavLink
                   key={item.name}

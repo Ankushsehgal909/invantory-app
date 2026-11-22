@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Filter, Plus, Download, Upload, MoreVertical, Edit, Trash2, Archive, Eye } from 'lucide-react';
-import { api, apiHelpers } from '../services/api';
+import { Search, Plus, Download, Upload, Edit, Trash2, Archive } from 'lucide-react';
+import { apiHelpers } from '../services/api';
 import { Product, ProductStatus } from '@shopstock/shared/types';
 import toast from 'react-hot-toast';
 import { formatCurrency } from '@shopstock/shared/utils';
@@ -69,15 +69,6 @@ export function Products() {
       setArchiveDialog(null);
     },
     onError: (error: any) => toast.error(error.response?.data?.error?.message || 'Failed to archive product'),
-  });
-
-  const restoreMutation = useMutation({
-    mutationFn: (id: string) => api.post(`/products/${id}/restore`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success('Product restored successfully');
-    },
-    onError: (error: any) => toast.error(error.response?.data?.error?.message || 'Failed to restore product'),
   });
 
   const handleExport = async () => {
@@ -330,7 +321,7 @@ export function Products() {
           onConfirm={() => deleteMutation.mutate({ id: deleteDialog.product.id, force: deleteDialog.force })}
           onCancel={() => setDeleteDialog(null)}
           isLoading={deleteMutation.isPending}
-          showForceOption={!!deleteDialog.product._count?.purchaseItems || !!deleteDialog.product._count?.salesInvoiceItems}
+          showForceOption={!!deleteDialog.product._count?.batches}
           onForceToggle={(force) => setDeleteDialog(d => d ? { ...d, force } : null)}
         />
       )}

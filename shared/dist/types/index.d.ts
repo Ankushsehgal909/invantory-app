@@ -209,6 +209,11 @@ export interface Product {
     updatedAt: Date;
     createdBy: string;
     updatedBy: string;
+    category?: Category;
+    batches?: Batch[];
+    _count?: {
+        batches: number;
+    };
 }
 export interface Batch {
     id: string;
@@ -240,6 +245,9 @@ export interface Supplier {
     isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
+    outstandingBalance?: number;
+    totalPurchases?: number;
+    purchases?: Purchase[];
 }
 export interface Customer {
     id: string;
@@ -259,6 +267,9 @@ export interface Customer {
     isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
+    outstandingBalance?: number;
+    totalPurchases?: number;
+    salesInvoices?: SalesInvoice[];
 }
 export interface Purchase {
     id: string;
@@ -281,6 +292,11 @@ export interface Purchase {
     createdAt: Date;
     updatedAt: Date;
     createdBy: string;
+    supplier?: Supplier;
+    items?: PurchaseItem[];
+    _count?: {
+        items: number;
+    };
 }
 export interface PurchaseItem {
     id: string;
@@ -318,6 +334,12 @@ export interface SalesInvoice {
     createdAt: Date;
     updatedAt: Date;
     createdBy: string;
+    customer?: Customer;
+    items?: SalesInvoiceItem[];
+    payments?: Payment[];
+    _count?: {
+        items: number;
+    };
 }
 export interface SalesInvoiceItem {
     id: string;
@@ -394,6 +416,21 @@ export interface SupplierLedgerEntry {
     balanceAfter: number;
     description: string;
     createdAt: Date;
+}
+export interface LedgerEntry {
+    id: string;
+    date: Date;
+    type: LedgerEntryType;
+    referenceType: ReferenceType;
+    referenceId: string;
+    referenceNumber?: string;
+    invoiceNumber?: string;
+    amount: number;
+    runningBalance: number;
+    description: string;
+    partyType: PartyType;
+    partyId: string;
+    partyName: string;
 }
 export interface CreditNote {
     id: string;

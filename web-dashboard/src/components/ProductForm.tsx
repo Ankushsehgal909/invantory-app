@@ -19,8 +19,6 @@ export function ProductForm({ product, onClose, onSubmit, isLoading }: ProductFo
   const {
     register,
     handleSubmit,
-    setValue,
-    watch,
     formState: { errors },
     reset,
   } = useForm({

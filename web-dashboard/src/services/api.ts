@@ -93,6 +93,7 @@ export const apiHelpers = {
   createSupplier: (data: any) => api.post('/suppliers', data),
   updateSupplier: (id: string, data: any) => api.put(`/suppliers/${id}`, data),
   deleteSupplier: (id: string) => api.delete(`/suppliers/${id}`),
+  addSupplierPayment: (id: string, data: any) => api.post(`/suppliers/${id}/payments`, data),
   recordSupplierPayment: (id: string, data: any) => api.post(`/suppliers/${id}/payments`, data),
   getSupplierLedger: (id: string, params?: any) => api.get(`/suppliers/${id}/ledger`, { params }),
 
@@ -102,6 +103,7 @@ export const apiHelpers = {
   createCustomer: (data: any) => api.post('/customers', data),
   updateCustomer: (id: string, data: any) => api.put(`/customers/${id}`, data),
   deleteCustomer: (id: string) => api.delete(`/customers/${id}`),
+  addCustomerPayment: (id: string, data: any) => api.post(`/customers/${id}/payments`, data),
   recordCustomerPayment: (id: string, data: any) => api.post(`/customers/${id}/payments`, data),
   createCreditNote: (id: string, data: any) => api.post(`/customers/${id}/credit-notes`, data),
   getCustomerLedger: (id: string, params?: any) => api.get(`/customers/${id}/ledger`, { params }),
@@ -112,15 +114,19 @@ export const apiHelpers = {
   getPurchase: (id: string) => api.get(`/purchases/${id}`),
   createPurchase: (data: any) => api.post('/purchases', data),
   updatePurchase: (id: string, data: any) => api.put(`/purchases/${id}`, data),
+  deletePurchase: (id: string) => api.delete(`/purchases/${id}`),
   cancelPurchase: (id: string, reason: string) => api.post(`/purchases/${id}/cancel`, { reason }),
+  exportPurchase: (id: string) => api.get(`/purchases/${id}/export`, { responseType: 'blob' }),
 
   // Sales
   getSales: (params?: any) => api.get('/sales', { params }),
-  getSale: (id: string) => api.get(`/sales/${id}`),
+  getSalesInvoice: (id: string) => api.get(`/sales/${id}`),
   createSale: (data: any) => api.post('/sales', data),
   updateSale: (id: string, data: any) => api.put(`/sales/${id}`, data),
+  deleteSalesInvoice: (id: string) => api.delete(`/sales/${id}`),
   cancelSale: (id: string, reason: string) => api.post(`/sales/${id}/cancel`, { reason }),
   recordSalePayment: (id: string, data: any) => api.post(`/sales/${id}/payments`, data),
+  exportSalesInvoice: (id: string) => api.get(`/sales/${id}/export`, { responseType: 'blob' }),
 
   // Stock
   getStockMovements: (params?: any) => api.get('/stock/movements', { params }),
@@ -165,10 +171,21 @@ export const apiHelpers = {
   exportStock: (params?: any) => api.get('/import-export/export/stock', { params, responseType: 'blob' }),
   exportReceivables: () => api.get('/import-export/export/receivables', { responseType: 'blob' }),
   exportPayables: () => api.get('/import-export/export/payables', { responseType: 'blob' }),
+  exportCustomers: (params?: any) => api.get('/import-export/export/customers', { params, responseType: 'blob' }),
+  exportSuppliers: (params?: any) => api.get('/import-export/export/suppliers', { params, responseType: 'blob' }),
   importProducts: (csv: string, dryRun?: boolean) => api.post('/import-export/import/products', { csv, dryRun }),
   getProductImportTemplate: () => api.get('/import-export/import/template/products', { responseType: 'blob' }),
   backup: () => api.post('/import-export/backup'),
   restore: () => api.post('/import-export/restore'),
+
+  // Users Management
+  getUsers: (params?: any) => api.get('/users', { params }),
+  createUser: (data: any) => api.post('/users', data),
+  updateUser: (id: string, data: any) => api.put(`/users/${id}`, data),
+  deleteUser: (id: string) => api.delete(`/users/${id}`),
+
+  // Reports - Ledger
+  getLedgerReport: (params?: any) => api.get('/reports/ledger', { params }),
 
   // Auth
   login: (data: { phone: string; password: string; shopId?: string }) => api.post('/auth/login', data),

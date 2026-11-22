@@ -61,14 +61,13 @@ export function Login() {
               <div className="mt-1">
                 <input
                   id="phone"
-                  name="phone"
                   type="tel"
                   autoComplete="tel"
                   placeholder="Enter your phone number"
                   {...register('phone', {
                     required: 'Phone number is required',
                     pattern: {
-                      value: /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/,
+                      value: /^[\d\s\-\+\(\)]{6,20}$/,
                       message: 'Please enter a valid phone number',
                     },
                   })}
@@ -90,7 +89,6 @@ export function Login() {
               <div className="mt-1 relative">
                 <input
                   id="password"
-                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   placeholder="Enter your password"

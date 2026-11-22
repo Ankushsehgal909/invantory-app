@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { TrendingUp, TrendingDown, AlertTriangle, Package, ShoppingCart, Users, DollarSign, AlertCircle, Clock, Plus } from 'lucide-react';
-import { api } from '../services/api';
 import { formatCurrency } from '@shopstock/shared/utils';
 import { apiHelpers } from '../services/api';
 

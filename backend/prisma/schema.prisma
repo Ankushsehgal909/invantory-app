@@ -189,6 +189,7 @@ model Shop {
   auditLogs         AuditLog[]
 
   @@index([name])
+  @@map("shops")
 }
 
 type TaxSettings {
@@ -238,6 +239,7 @@ model User {
   @@unique([shopId, phone])
   @@index([shopId])
   @@index([shopId, role])
+  @@map("users")
 }
 
 model Category {
@@ -257,6 +259,7 @@ model Category {
   products    Product[]
 
   @@unique([shopId, name])
+  @@map("categories")
   @@index([shopId])
   @@index([shopId, parentId])
 }
@@ -300,6 +303,7 @@ model Product {
   @@index([shopId, categoryId])
   @@index([shopId, status])
   @@index([shopId, reorderLevel, currentStock])
+  @@map("products")
 }
 
 model Batch {
@@ -331,6 +335,7 @@ model Batch {
   @@index([productId, expiryDate])
   @@index([expiryDate])
   @@index([isExpired])
+  @@map("batches")
 }
 
 model Supplier {
@@ -358,6 +363,7 @@ model Supplier {
   @@unique([shopId, name])
   @@index([shopId])
   @@index([shopId, isActive])
+  @@map("suppliers")
 }
 
 model Customer {
@@ -388,6 +394,7 @@ model Customer {
   @@unique([shopId, businessName])
   @@index([shopId])
   @@index([shopId, isActive])
+  @@map("customers")
 }
 
 model Purchase {
@@ -424,6 +431,7 @@ model Purchase {
   @@index([shopId, supplierId])
   @@index([shopId, purchaseDate])
   @@index([shopId, paymentStatus])
+  @@map("purchases")
 }
 
 model PurchaseItem {
@@ -446,6 +454,7 @@ model PurchaseItem {
   @@index([purchaseId])
   @@index([productId])
   @@index([batchId])
+  @@map("purchase_items")
 }
 
 model SalesInvoice {
@@ -484,6 +493,7 @@ model SalesInvoice {
   @@index([shopId, invoiceDate])
   @@index([shopId, paymentStatus])
   @@index([shopId, status])
+  @@map("sales_invoices")
 }
 
 model SalesInvoiceItem {
@@ -511,6 +521,7 @@ model SalesInvoiceItem {
   @@index([invoiceId])
   @@index([productId])
   @@index([batchId])
+  @@map("sales_invoice_items")
 }
 
 model StockMovement {
@@ -542,6 +553,7 @@ model StockMovement {
   @@index([shopId, referenceType, referenceId])
   @@index([shopId, createdAt])
   @@index([productId, createdAt])
+  @@map("stock_movements")
 }
 
 model Payment {
@@ -570,6 +582,7 @@ model Payment {
   @@index([shopId, partyType, partyId])
   @@index([shopId, referenceType, referenceId])
   @@index([shopId, paidAt])
+  @@map("payments")
 }
 
 model CustomerLedgerEntry {
@@ -592,6 +605,7 @@ model CustomerLedgerEntry {
   @@index([shopId, customerId])
   @@index([shopId, customerId, createdAt])
   @@index([referenceType, referenceId])
+  @@map("customer_ledger_entries")
 }
 
 model SupplierLedgerEntry {
@@ -614,6 +628,7 @@ model SupplierLedgerEntry {
   @@index([shopId, supplierId])
   @@index([shopId, supplierId, createdAt])
   @@index([referenceType, referenceId])
+  @@map("supplier_ledger_entries")
 }
 
 model CreditNote {
@@ -635,6 +650,7 @@ model CreditNote {
   @@index([shopId])
   @@index([shopId, customerId])
   @@index([invoiceId])
+  @@map("credit_notes")
 }
 
 model Notification {
@@ -657,6 +673,7 @@ model Notification {
   @@index([shopId, status])
   @@index([shopId, dueAt])
   @@index([entityType, entityId])
+  @@map("notifications")
 }
 
 model AuditLog {
@@ -679,4 +696,5 @@ model AuditLog {
   @@index([shopId, actorId])
   @@index([shopId, entityType, entityId])
   @@index([shopId, createdAt])
+  @@map("audit_logs")
 }

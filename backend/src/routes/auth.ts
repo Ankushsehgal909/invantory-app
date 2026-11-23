@@ -64,11 +64,12 @@ router.post('/login', asyncHandler(async (req: Request, res: Response) => {
     throw new AuthenticationError('Invalid phone or password');
   }
 
-  // Update last login
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { lastLoginAt: new Date() },
-  });
+  // Update last login using MongoDB native client (Prisma requires replica set for writes)
+  const db = getMongoDb();
+  await db.collection('users').updateOne(
+    { _id: new ObjectId(user.id) },
+    { $set: { lastLoginAt: new Date(), updatedAt: new Date() } }
+  );
 
   // Generate tokens
   const accessToken = generateAccessToken({

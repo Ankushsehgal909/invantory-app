@@ -5,7 +5,7 @@
 
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { prisma } from '../index';
+import { prisma, getMongoDb } from '../index';
 import { config } from '../config';
 import { asyncHandler, AppError, ValidationError, AuthenticationError, ConflictError } from '../middleware/errorHandler';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../middleware/auth';
@@ -13,6 +13,7 @@ import { loginSchema, changePasswordSchema, registerSchema } from '@shopstock/sh
 import { ERROR_CODES, HTTP_STATUS, UserStatus, UserRole } from '@shopstock/shared/constants';
 import { logger } from '../utils/logger';
 import { logAction } from '../middleware/requestLogger';
+import { ObjectId } from 'mongodb';
 
 const router = Router();
 
@@ -118,7 +119,7 @@ router.post('/register', asyncHandler(async (req: Request, res: Response) => {
 
   const { name, phone, email, password, shopName } = validation.data;
 
-  // Check if phone already exists
+  // Check if phone already exists (using Prisma for reads - works fine)
   const existingPhone = await prisma.user.findFirst({
     where: { phone },
   });
@@ -141,84 +142,112 @@ router.post('/register', asyncHandler(async (req: Request, res: Response) => {
   // Hash password
   const passwordHash = await bcrypt.hash(password, config.security.bcryptRounds);
 
-  // Create shop and owner user in a transaction
-  const result = await prisma.$transaction(async (tx) => {
-    // Create shop
-    const shop = await tx.shop.create({
-      data: {
-        name: shopName,
-        currency: 'INR',
-        timezone: 'Asia/Kolkata',
-        invoicePrefix: 'INV-',
-        purchasePrefix: 'PUR-',
-        taxSettings: {
-          enabled: false,
-          taxType: 'NONE',
-          defaultTaxRate: 0,
-          taxInclusive: false,
-          gstin: '',
-        },
-        settings: {
-          lowStockDefaultThreshold: 10,
-          expiryAlertDays: [90, 30, 7, 1],
-          allowNegativeStock: false,
-          defaultPaymentTerms: 30,
-          enableBatchTracking: true,
-          enableExpiryTracking: true,
-          currencySymbol: '₹',
-          dateFormat: 'dd/MM/yyyy',
-          numberFormat: 'en-IN',
-        },
-      },
-    });
+  // Use MongoDB native client for writes (Prisma requires replica set for writes)
+  const db = getMongoDb();
+  const shopsCollection = db.collection('shops');
+  const usersCollection = db.collection('users');
 
-    // Create owner user
-    const user = await tx.user.create({
-      data: {
-        shopId: shop.id,
-        name,
-        phone,
-        email,
-        passwordHash,
-        role: UserRole.OWNER,
-        status: UserStatus.ACTIVE,
-      },
-      select: {
-        id: true,
-        shopId: true,
-        name: true,
-        phone: true,
-        email: true,
-        role: true,
-        avatar: true,
-      },
-    });
+  // Create shop
+  const now = new Date();
+  const shopDoc = {
+    name: shopName,
+    address: null,
+    phone: null,
+    email: null,
+    logo: null,
+    currency: 'INR',
+    timezone: 'Asia/Kolkata',
+    invoicePrefix: 'INV-',
+    purchasePrefix: 'PUR-',
+    taxSettings: {
+      enabled: false,
+      taxType: 'NONE',
+      defaultTaxRate: 0,
+      taxInclusive: false,
+      gstin: '',
+    },
+    settings: {
+      lowStockDefaultThreshold: 10,
+      expiryAlertDays: [90, 30, 7, 1],
+      allowNegativeStock: false,
+      defaultPaymentTerms: 30,
+      enableBatchTracking: true,
+      enableExpiryTracking: true,
+      currencySymbol: '₹',
+      dateFormat: 'dd/MM/yyyy',
+      numberFormat: 'en-IN',
+    },
+    createdAt: now,
+    updatedAt: now,
+  };
 
-    return { user, shop };
-  });
+  const shopResult = await shopsCollection.insertOne(shopDoc);
+  const shopId = shopResult.insertedId.toString();
+
+  // Create owner user
+  const userDoc = {
+    shopId: new ObjectId(shopId),
+    name,
+    phone,
+    email: email || null,
+    passwordHash,
+    role: UserRole.OWNER,
+    status: UserStatus.ACTIVE,
+    pinHash: null,
+    avatar: null,
+    lastLoginAt: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const userResult = await usersCollection.insertOne(userDoc);
+  const userId = userResult.insertedId.toString();
+
+  // Create user object for response (matching Prisma select)
+  const user = {
+    id: userId,
+    shopId,
+    name,
+    phone,
+    email: email || null,
+    role: UserRole.OWNER,
+    avatar: null,
+  };
+
+  // Create shop object for response
+  const shop = {
+    id: shopId,
+    name: shopName,
+    currency: 'INR',
+    timezone: 'Asia/Kolkata',
+    invoicePrefix: 'INV-',
+    purchasePrefix: 'PUR-',
+    taxSettings: shopDoc.taxSettings,
+    settings: shopDoc.settings,
+  };
 
   // Generate tokens
   const accessToken = generateAccessToken({
-    userId: result.user.id,
-    shopId: result.user.shopId,
-    role: result.user.role as UserRole,
+    userId,
+    shopId,
+    role: UserRole.OWNER,
   });
 
   const refreshToken = generateRefreshToken({
-    userId: result.user.id,
-    shopId: result.user.shopId,
-    role: result.user.role as UserRole,
+    userId,
+    shopId,
+    role: UserRole.OWNER,
   });
 
-  logger.info('New shop and owner registered', { userId: result.user.id, shopId: result.shop.id });
+  logger.info('New shop and owner registered', { userId, shopId });
 
   res.status(201).json({
     success: true,
     data: {
-      user: result.user,
+      user,
       accessToken,
       refreshToken,
-      shop: result.shop,
+      shop,
     },
   });
 }));

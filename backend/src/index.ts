@@ -12,6 +12,7 @@ import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
+import { MongoClient, Db } from 'mongodb';
 
 import { config, validateConfig } from './config';
 import { PrismaClient } from '@prisma/client';
@@ -31,6 +32,44 @@ export const prisma = new PrismaClient({
   log: config.app.env === 'development' ? ['query', 'error', 'warn'] : ['error'],
   errorFormat: 'pretty',
 });
+
+// ============================================
+// Initialize MongoDB Native Client (for operations requiring replica set)
+// ============================================
+
+let mongoClient: MongoClient | null = null;
+let mongoDb: Db | null = null;
+
+export async function connectMongo(): Promise<void> {
+  try {
+    mongoClient = new MongoClient(config.database.url);
+    await mongoClient.connect();
+    // Extract database name from URL
+    const url = new URL(config.database.url);
+    const dbName = url.pathname.slice(1) || 'shopstock';
+    mongoDb = mongoClient.db(dbName);
+    logger.info('MongoDB native client connected', { database: dbName });
+  } catch (error) {
+    logger.error('Failed to connect MongoDB native client:', error);
+    throw error;
+  }
+}
+
+export function getMongoDb(): Db {
+  if (!mongoDb) {
+    throw new Error('MongoDB not initialized. Call connectMongo() first.');
+  }
+  return mongoDb;
+}
+
+export async function disconnectMongo(): Promise<void> {
+  if (mongoClient) {
+    await mongoClient.close();
+    mongoClient = null;
+    mongoDb = null;
+    logger.info('MongoDB native client disconnected');
+  }
+}
 
 // ============================================
 // Create Express App
@@ -132,7 +171,7 @@ app.use('/api/v1/auth', authLimiter);
 
 app.get('/health', async (req, res) => {
   try {
-    await (prisma as any).$executeRawUnsafe('SELECT 1');
+    await (prisma as any).$runCommandRaw({ ping: 1 });
     res.json({
       success: true,
       data: {
@@ -156,7 +195,7 @@ app.get('/health', async (req, res) => {
 
 app.get('/health/ready', async (req, res) => {
   try {
-    await (prisma as any).$executeRawUnsafe('SELECT 1');
+    await (prisma as any).$runCommandRaw({ ping: 1 });
     res.json({ success: true, data: { ready: true } });
   } catch {
     res.status(503).json({ success: false, data: { ready: false } });
@@ -230,6 +269,10 @@ const shutdown = async (signal: string) => {
     await prisma.$disconnect();
     logger.info('Prisma disconnected');
 
+    // Disconnect MongoDB native client
+    await disconnectMongo();
+    logger.info('MongoDB native client disconnected');
+
     process.exit(0);
   });
 
@@ -263,9 +306,13 @@ const startServer = async () => {
     // Validate configuration
     validateConfig();
 
-    // Connect to database
+    // Connect to database (Prisma)
     await prisma.$connect();
-    logger.info('Database connected');
+    logger.info('Database connected (Prisma)');
+
+    // Connect to MongoDB native client (for write operations)
+    await connectMongo();
+    logger.info('Database connected (MongoDB native)');
 
     // Start HTTP server
     httpServer.listen(config.app.port, () => {

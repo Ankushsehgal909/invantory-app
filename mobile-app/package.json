@@ -15,7 +15,8 @@
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,css,md}\"",
-    "postinstall": "cd ios && pod install"
+    "pod-install": "cd ios && pod install",
+    "postinstall": "node -e \"if (process.platform === 'darwin') { try { require('child_process').execSync('cd ios && pod install', { stdio: 'inherit' }); } catch (e) { console.warn(e.message); } }\""
   },
   "dependencies": {
     "@shopstock/shared": "^1.0.0",

@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { View, Text, FlatList, ScrollView, TouchableOpacity, StyleSheet, TextInput, RefreshControl, SafeAreaView, Modal, ActivityIndicator } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Package, Search, Filter, Plus, ChevronRight, Edit, Trash2, Barcode, AlertTriangle, Eye } from 'lucide-react-native';
+import { Package, Search, Filter, Plus, ChevronRight, Edit, Trash2, Barcode, AlertTriangle, Eye, ScanLine } from 'lucide-react-native';
 import { apiHelpers } from '../services/api';
 import { formatCurrencyMajor as formatCurrency } from '@shopstock/shared/utils';
+import { BarcodeScanner } from '../components/BarcodeScanner';
 
 export function ProductsScreen({ navigation }: any) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -77,14 +79,18 @@ export function ProductsScreen({ navigation }: any) {
           <Text style={styles.stockLabel}>Stock</Text>
           <Text style={[
             styles.stockValue,
-            item.totalStock <= 0 ? styles.stockOut : item.totalStock <= (item.reorderLevel || 10) ? styles.stockLow : styles.stockNormal,
+            (item.currentStock ?? item.totalStock ?? 0) <= 0
+              ? styles.stockOut
+              : (item.currentStock ?? item.totalStock ?? 0) <= (item.reorderLevel || 10)
+              ? styles.stockLow
+              : styles.stockNormal,
           ]}>
-            {item.totalStock} {item.baseUnit}
+            {item.currentStock ?? item.totalStock ?? 0} {item.baseUnit || item.unit || 'pcs'}
           </Text>
         </View>
         <View style={styles.priceInfo}>
           <Text style={styles.priceLabel}>Sale Price</Text>
-          <Text style={styles.priceValue}>{formatCurrency(item.salePrice)}</Text>
+          <Text style={styles.priceValue}>{formatCurrency(item.sellingPrice ?? item.salePrice ?? 0)}</Text>
         </View>
         <ChevronRight size={20} color="#94a3b8" />
       </View>
@@ -136,6 +142,13 @@ export function ProductsScreen({ navigation }: any) {
             placeholderTextColor="#94a3b8"
           />
         </View>
+        <TouchableOpacity
+          onPress={() => setShowScanner(true)}
+          style={styles.filterButton}
+          accessibilityLabel="Scan barcode"
+        >
+          <ScanLine size={20} color="#0284C7" />
+        </TouchableOpacity>
         <TouchableOpacity style={styles.filterButton}>
           <Filter size={20} color="#64748b" />
         </TouchableOpacity>
@@ -210,6 +223,16 @@ export function ProductsScreen({ navigation }: any) {
             </View>
           </View>
         </View>
+      </Modal>
+      {/* Barcode Scanner Modal */}
+      <Modal visible={showScanner} animationType="slide">
+        <BarcodeScanner
+          onScan={(barcode) => {
+            setSearch(barcode);
+            setShowScanner(false);
+          }}
+          onClose={() => setShowScanner(false)}
+        />
       </Modal>
     </SafeAreaView>
   );

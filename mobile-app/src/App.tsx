@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { colors, paperTheme } from './theme';
 import { LoginScreen } from './screens/LoginScreen';
 import { RegisterScreen } from './screens/RegisterScreen';
 import { DashboardScreen } from './screens/DashboardScreen';
@@ -50,12 +51,19 @@ function TabNavigator() {
           const Icon = tab.icon;
           return <Icon size={size} color={color} strokeWidth={focused ? 2.5 : 2} />;
         },
-        tabBarActiveTintColor: '#0ea5e9',
-        tabBarInactiveTintColor: '#94a3b8',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.placeholder,
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+          marginTop: 2,
+        },
         tabBarStyle: {
-          backgroundColor: '#fff',
+          backgroundColor: colors.surface,
           borderTopWidth: 1,
-          borderTopColor: '#e2e8f0',
+          borderTopColor: colors.border,
+          height: 64,
+          paddingTop: 6,
           paddingBottom: 8,
         },
         headerShown: false,
@@ -97,7 +105,7 @@ function AppNavigator() {
     >
       {user ? (
         <>
-          <Stack.Screen name="Main" component={TabNavigator} />
+          <Stack.Screen name="Main" component={TabNavigator} options={{ headerShown: false }} />
           <Stack.Screen name="ProductDetail" component={ProductDetailScreen as React.ComponentType<any>} options={{ title: 'Product Details' }} />
           <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
         </>
@@ -113,7 +121,7 @@ function AppNavigator() {
 
 export default function App() {
   return (
-    <PaperProvider>
+    <PaperProvider theme={paperTheme}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <NavigationContainer>

@@ -1,0 +1,15 @@
+/Users/psiborg/Documents/projects/invantory-app/mobile-app/android/app/.cxx/Debug/6v5i2i31/arm64-v8a/CMakeFiles/appmodules.dir
+/Users/psiborg/Documents/projects/invantory-app/mobile-app/android/app/.cxx/Debug/6v5i2i31/arm64-v8a/CMakeFiles/edit_cache.dir
+/Users/psiborg/Documents/projects/invantory-app/mobile-app/android/app/.cxx/Debug/6v5i2i31/arm64-v8a/CMakeFiles/rebuild_cache.dir
+/Users/psiborg/Documents/projects/invantory-app/mobile-app/android/app/.cxx/Debug/6v5i2i31/arm64-v8a/RNKeychainSpec_autolinked_build/CMakeFiles/react_codegen_RNKeychainSpec.dir
+/Users/psiborg/Documents/projects/invantory-app/mobile-app/android/app/.cxx/Debug/6v5i2i31/arm64-v8a/RNKeychainSpec_autolinked_build/CMakeFiles/edit_cache.dir
+/Users/psiborg/Documents/projects/invantory-app/mobile-app/android/app/.cxx/Debug/6v5i2i31/arm64-v8a/RNKeychainSpec_autolinked_build/CMakeFiles/rebuild_cache.dir
+/Users/psiborg/Documents/projects/invantory-app/mobile-app/android/app/.cxx/Debug/6v5i2i31/arm64-v8a/safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir
+/Users/psiborg/Documents/projects/invantory-app/mobile-app/android/app/.cxx/Debug/6v5i2i31/arm64-v8a/safeareacontext_autolinked_build/CMakeFiles/edit_cache.dir
+/Users/psiborg/Documents/projects/invantory-app/mobile-app/android/app/.cxx/Debug/6v5i2i31/arm64-v8a/safeareacontext_autolinked_build/CMakeFiles/rebuild_cache.dir
+/Users/psiborg/Documents/projects/invantory-app/mobile-app/android/app/.cxx/Debug/6v5i2i31/arm64-v8a/rnscreens_autolinked_build/CMakeFiles/react_codegen_rnscreens.dir
+/Users/psiborg/Documents/projects/invantory-app/mobile-app/android/app/.cxx/Debug/6v5i2i31/arm64-v8a/rnscreens_autolinked_build/CMakeFiles/edit_cache.dir
+/Users/psiborg/Documents/projects/invantory-app/mobile-app/android/app/.cxx/Debug/6v5i2i31/arm64-v8a/rnscreens_autolinked_build/CMakeFiles/rebuild_cache.dir
+/Users/psiborg/Documents/projects/invantory-app/mobile-app/android/app/.cxx/Debug/6v5i2i31/arm64-v8a/rnsvg_autolinked_build/CMakeFiles/react_codegen_rnsvg.dir
+/Users/psiborg/Documents/projects/invantory-app/mobile-app/android/app/.cxx/Debug/6v5i2i31/arm64-v8a/rnsvg_autolinked_build/CMakeFiles/edit_cache.dir
+/Users/psiborg/Documents/projects/invantory-app/mobile-app/android/app/.cxx/Debug/6v5i2i31/arm64-v8a/rnsvg_autolinked_build/CMakeFiles/rebuild_cache.dir

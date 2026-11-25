@@ -91,6 +91,8 @@ export var PaymentMethod;
 export var InvoiceStatus;
 (function (InvoiceStatus) {
     InvoiceStatus["DRAFT"] = "DRAFT";
+    InvoiceStatus["PENDING"] = "PENDING";
+    InvoiceStatus["COMPLETED"] = "COMPLETED";
     InvoiceStatus["FINALIZED"] = "FINALIZED";
     InvoiceStatus["CANCELLED"] = "CANCELLED";
     InvoiceStatus["REFUNDED"] = "REFUNDED";

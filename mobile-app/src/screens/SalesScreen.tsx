@@ -5,13 +5,25 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Package, Search, Filter, Plus, ChevronRight, Edit, Trash2, Download, ArrowDown, ArrowUp, Clock, CheckCircle, XCircle, DollarSign, ShoppingCart } from 'lucide-react-native';
 import { apiHelpers } from '../services/api';
 import { formatCurrencyMajor as formatCurrency, formatDate } from '@shopstock/shared/utils';
+import { PaymentMethod, InvoiceStatus } from '@shopstock/shared/types';
+
+const SALE_PAYMENT_METHODS = [
+  { label: 'Cash', value: PaymentMethod.CASH },
+  { label: 'UPI', value: PaymentMethod.UPI },
+] as const;
+
+const SALE_STATUS_OPTIONS = [
+  { label: 'Complete', value: InvoiceStatus.COMPLETED },
+  { label: 'Pending', value: InvoiceStatus.PENDING },
+] as const;
 
 const statusConfig: Record<string, { color: string; icon: any; label: string }> = {
-  draft: { color: '#64748b', icon: Clock, label: 'Draft' },
-  pending: { color: '#3b82f6', icon: Clock, label: 'Pending' },
-  completed: { color: '#22c55e', icon: CheckCircle, label: 'Completed' },
-  returned: { color: '#f59e0b', icon: ArrowUp, label: 'Returned' },
-  cancelled: { color: '#ef4444', icon: XCircle, label: 'Cancelled' },
+  DRAFT: { color: '#64748b', icon: Clock, label: 'Draft' },
+  PENDING: { color: '#f59e0b', icon: Clock, label: 'Pending' },
+  COMPLETED: { color: '#22c55e', icon: CheckCircle, label: 'Complete' },
+  FINALIZED: { color: '#0284C7', icon: CheckCircle, label: 'Finalized' },
+  REFUNDED: { color: '#f59e0b', icon: ArrowUp, label: 'Refunded' },
+  CANCELLED: { color: '#ef4444', icon: XCircle, label: 'Cancelled' },
 };
 
 export function SalesScreen({ navigation }: any) {
@@ -59,7 +71,7 @@ export function SalesScreen({ navigation }: any) {
   };
 
   const renderItem = ({ item }: { item: any }) => {
-    const status = statusConfig[item.status] || statusConfig.draft;
+    const status = statusConfig[item.status] || statusConfig.DRAFT;
     const StatusIcon = status.icon;
     return (
       <TouchableOpacity
@@ -218,11 +230,11 @@ export function SalesScreen({ navigation }: any) {
 
 function SaleForm({ sale, onClose, onSubmit }: any) {
   const [formData, setFormData] = useState({
-    customerId: '',
-    saleDate: new Date().toISOString().split('T')[0],
-    status: 'completed',
-    paymentMethod: 'cash',
-    notes: '',
+    customerId: sale?.customerId || '',
+    saleDate: sale?.invoiceDate?.split('T')[0] || new Date().toISOString().split('T')[0],
+    status: (sale?.status as InvoiceStatus) || InvoiceStatus.COMPLETED,
+    paymentMethod: (sale?.paymentMethod as PaymentMethod) || PaymentMethod.CASH,
+    notes: sale?.notes || '',
     items: [{ productId: '', quantity: '1', unitPrice: '', discount: '0', taxRate: '0' }],
   });
 
@@ -267,19 +279,44 @@ function SaleForm({ sale, onClose, onSubmit }: any) {
           />
         </View>
 
-        <View style={styles.inputRow}>
-          <TextInput
-            placeholder="Payment Method"
-            value={formData.paymentMethod}
-            onChangeText={(v) => setFormData({ ...formData, paymentMethod: v })}
-            style={styles.input}
-          />
-          <TextInput
-            placeholder="Status"
-            value={formData.status}
-            onChangeText={(v) => setFormData({ ...formData, status: v })}
-            style={styles.input}
-          />
+        <View style={styles.enumGroup}>
+          <Text style={styles.enumLabel}>Payment Method</Text>
+          <View style={styles.enumRow}>
+            {SALE_PAYMENT_METHODS.map((option) => {
+              const active = formData.paymentMethod === option.value;
+              return (
+                <TouchableOpacity
+                  key={option.value}
+                  onPress={() => setFormData({ ...formData, paymentMethod: option.value })}
+                  style={[styles.enumChip, active && styles.enumChipActive]}
+                >
+                  <Text style={[styles.enumChipText, active && styles.enumChipTextActive]}>
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        <View style={styles.enumGroup}>
+          <Text style={styles.enumLabel}>Status</Text>
+          <View style={styles.enumRow}>
+            {SALE_STATUS_OPTIONS.map((option) => {
+              const active = formData.status === option.value;
+              return (
+                <TouchableOpacity
+                  key={option.value}
+                  onPress={() => setFormData({ ...formData, status: option.value })}
+                  style={[styles.enumChip, active && styles.enumChipActive]}
+                >
+                  <Text style={[styles.enumChipText, active && styles.enumChipTextActive]}>
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
 
         <TextInput
@@ -398,6 +435,13 @@ const styles = StyleSheet.create({
   formSectionTitle: { fontSize: 14, fontWeight: '600', color: '#1e293b', marginBottom: 8, paddingTop: 8 },
   inputRow: { flexDirection: 'row', gap: 12 },
   input: { flex: 1, height: 48, paddingHorizontal: 16, backgroundColor: '#fff', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 10, fontSize: 16, color: '#1e293b' },
+  enumGroup: { gap: 8 },
+  enumLabel: { fontSize: 13, fontWeight: '600', color: '#475569' },
+  enumRow: { flexDirection: 'row', gap: 10 },
+  enumChip: { flex: 1, height: 44, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
+  enumChipActive: { backgroundColor: '#0284C7', borderColor: '#0284C7' },
+  enumChipText: { fontSize: 14, fontWeight: '600', color: '#475569' },
+  enumChipTextActive: { color: '#FFFFFF' },
   textArea: { height: 80, paddingTop: 12 },
   itemRow: { flexDirection: 'row', gap: 8, marginBottom: 12, alignItems: 'center' },
   itemInputWrapper: { flex: 1 },

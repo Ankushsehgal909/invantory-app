@@ -6,6 +6,7 @@ import { Provider as PaperProvider } from 'react-native-paper';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginScreen } from './screens/LoginScreen';
+import { RegisterScreen } from './screens/RegisterScreen';
 import { DashboardScreen } from './screens/DashboardScreen';
 import { ProductsScreen } from './screens/ProductsScreen';
 import { ProductDetailScreen } from './screens/ProductDetailScreen';
@@ -101,7 +102,10 @@ function AppNavigator() {
           <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
         </>
       ) : (
-        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+        <>
+          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
+        </>
       )}
     </Stack.Navigator>
   );

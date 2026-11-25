@@ -4,11 +4,20 @@ import * as Keychain from 'react-native-keychain';
 import { api } from '../services/api';
 import { User, Shop } from '@shopstock/shared/types';
 
+interface RegisterPayload {
+  name: string;
+  phone: string;
+  email?: string;
+  password: string;
+  shopName: string;
+}
+
 interface AuthContextType {
   user: User | null;
   shop: Shop | null;
   loading: boolean;
   login: (phone: string, password: string, shopId?: string) => Promise<void>;
+  register: (payload: RegisterPayload) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -37,6 +46,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (phone: string, password: string, shopId?: string) => {
     const response = await api.post('/auth/login', { phone, password, shopId });
+    const { user: userData, accessToken, refreshToken, shop: shopData } = response.data.data;
+
+    await Keychain.setGenericPassword('accessToken', accessToken, { service: ACCESS_TOKEN_SERVICE });
+    await Keychain.setGenericPassword('refreshToken', refreshToken, { service: REFRESH_TOKEN_SERVICE });
+    api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+
+    setUser(userData);
+    setShop(shopData);
+  };
+
+  const register = async (payload: RegisterPayload) => {
+    const response = await api.post('/auth/register', payload);
     const { user: userData, accessToken, refreshToken, shop: shopData } = response.data.data;
 
     await Keychain.setGenericPassword('accessToken', accessToken, { service: ACCESS_TOKEN_SERVICE });
@@ -91,7 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refreshUser]);
 
   return (
-    <AuthContext.Provider value={{ user, shop, loading, login, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, shop, loading, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

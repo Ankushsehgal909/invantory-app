@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Modal, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, Modal, ActivityIndicator, Alert } from 'react-native';
+import { SafeAreaView } from '../components/SafeAreaView';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Package, Edit, Trash2, ChevronLeft, Barcode, AlertTriangle, Eye, Plus, Minus, Download, Upload } from 'lucide-react-native';
 import { apiHelpers } from '../services/api';
@@ -489,7 +490,7 @@ const styles = StyleSheet.create({
   infoLabel: { fontSize: 12, color: '#64748b', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
   infoValue: { fontSize: 16, fontWeight: '500', color: '#1e293b' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalContainer: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '85%' },
+  modalContainer: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, height: '85%', maxHeight: '90%' },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, borderBottomWidth: 1, borderBottomColor: '#e2e8f0' },
   modalTitle: { fontSize: 18, fontWeight: '600', color: '#1e293b' },
   modalClose: { padding: 4 },

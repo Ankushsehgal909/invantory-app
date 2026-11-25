@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, Switch, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Switch, Alert } from 'react-native';
+import { SafeAreaView } from '../components/SafeAreaView';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Settings as SettingsIcon, User, Bell, Palette, Shield, LogOut, Info, Moon, Sun, Languages, Key, Download, Upload, Trash2, ChevronRight, FileText, Edit, MapPin, Phone, Mail } from 'lucide-react-native';
 import { apiHelpers } from '../services/api';

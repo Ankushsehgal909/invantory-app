@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, SafeAreaView } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
+import { SafeAreaView } from '../components/SafeAreaView';
 import { useQuery } from '@tanstack/react-query';
 import { Package, DollarSign, TrendingUp, ShoppingCart, Truck, AlertTriangle, Users, Plus, Download, Upload, Settings as SettingsIcon } from 'lucide-react-native';
 import { apiHelpers } from '../services/api';

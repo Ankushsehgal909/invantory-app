@@ -194,3 +194,27 @@ if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
   message("-- GLOB mismatch!")
   file(TOUCH_NOCREATE "/Users/psiborg/Documents/projects/invantory-app/mobile-app/android/app/.cxx/Debug/6v5i2i31/x86/CMakeFiles/cmake.verify_globs")
 endif()
+
+# react_codegen_SRCS at /Users/psiborg/Documents/projects/invantory-app/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/CMakeLists.txt:9 (file)
+file(GLOB NEW_GLOB LIST_DIRECTORIES true "/Users/psiborg/Documents/projects/invantory-app/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/*.cpp")
+set(OLD_GLOB
+  "/Users/psiborg/Documents/projects/invantory-app/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/RNVectorIconsSpec-generated.cpp"
+  )
+if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
+  message("-- GLOB mismatch!")
+  file(TOUCH_NOCREATE "/Users/psiborg/Documents/projects/invantory-app/mobile-app/android/app/.cxx/Debug/6v5i2i31/x86/CMakeFiles/cmake.verify_globs")
+endif()
+
+# react_codegen_SRCS at /Users/psiborg/Documents/projects/invantory-app/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/CMakeLists.txt:9 (file)
+file(GLOB NEW_GLOB LIST_DIRECTORIES true "/Users/psiborg/Documents/projects/invantory-app/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/react/renderer/components/RNVectorIconsSpec/*.cpp")
+set(OLD_GLOB
+  "/Users/psiborg/Documents/projects/invantory-app/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/react/renderer/components/RNVectorIconsSpec/ComponentDescriptors.cpp"
+  "/Users/psiborg/Documents/projects/invantory-app/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/react/renderer/components/RNVectorIconsSpec/EventEmitters.cpp"
+  "/Users/psiborg/Documents/projects/invantory-app/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/react/renderer/components/RNVectorIconsSpec/Props.cpp"
+  "/Users/psiborg/Documents/projects/invantory-app/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/react/renderer/components/RNVectorIconsSpec/ShadowNodes.cpp"
+  "/Users/psiborg/Documents/projects/invantory-app/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/react/renderer/components/RNVectorIconsSpec/States.cpp"
+  )
+if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
+  message("-- GLOB mismatch!")
+  file(TOUCH_NOCREATE "/Users/psiborg/Documents/projects/invantory-app/mobile-app/android/app/.cxx/Debug/6v5i2i31/x86/CMakeFiles/cmake.verify_globs")
+endif()

@@ -31,6 +31,12 @@ const config = {
     // in the monorepo root from loading React 18 from web-dashboard.
     resolveRequest: (context, moduleName, platform) => {
       if (
+        moduleName === 'react-native-reanimated' ||
+        moduleName.startsWith('react-native-reanimated/')
+      ) {
+        return { type: 'empty' };
+      }
+      if (
         moduleName === 'react' ||
         moduleName.startsWith('react/') ||
         moduleName === 'react-native' ||

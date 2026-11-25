@@ -48,6 +48,7 @@ if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   include("/Users/psiborg/Documents/projects/invantory-app/mobile-app/android/app/.cxx/Debug/6v5i2i31/armeabi-v7a/safeareacontext_autolinked_build/cmake_install.cmake")
   include("/Users/psiborg/Documents/projects/invantory-app/mobile-app/android/app/.cxx/Debug/6v5i2i31/armeabi-v7a/rnscreens_autolinked_build/cmake_install.cmake")
   include("/Users/psiborg/Documents/projects/invantory-app/mobile-app/android/app/.cxx/Debug/6v5i2i31/armeabi-v7a/rnsvg_autolinked_build/cmake_install.cmake")
+  include("/Users/psiborg/Documents/projects/invantory-app/mobile-app/android/app/.cxx/Debug/6v5i2i31/armeabi-v7a/RNVectorIconsSpec_autolinked_build/cmake_install.cmake")
 
 endif()
 

@@ -3,6 +3,7 @@ import { View, Text, FlatList, ScrollView, TouchableOpacity, StyleSheet, TextInp
 import { SafeAreaView } from '../components/SafeAreaView';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Package, Search, Filter, Plus, ChevronRight, Edit, Trash2, Barcode, AlertTriangle, Eye, ScanLine } from 'lucide-react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { apiHelpers } from '../services/api';
 import { formatCurrencyMajor as formatCurrency } from '@shopstock/shared/utils';
 import { BarcodeScanner } from '../components/BarcodeScanner';
@@ -188,7 +189,7 @@ export function ProductsScreen({ navigation }: any) {
                 {editingProduct ? 'Edit Product' : 'Add Product'}
               </Text>
               <TouchableOpacity onPress={() => { setShowModal(false); setEditingProduct(null); }} style={styles.modalClose}>
-                <Eye size={24} color="#64748b" />
+                <Icon name="close" size={24} color="#64748b" />
               </TouchableOpacity>
             </View>
             <ProductForm

@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, M
 import { SafeAreaView } from '../components/SafeAreaView';
 import { useQuery } from '@tanstack/react-query';
 import { FileText, TrendingUp, TrendingDown, DollarSign, Package, ShoppingCart, Users, Truck, Clock, AlertTriangle, Download, Calendar, Filter } from 'lucide-react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { apiHelpers } from '../services/api';
 import { formatCurrencyMajor as formatCurrency, formatDate } from '@shopstock/shared/utils';
 
@@ -245,7 +246,7 @@ export function ReportsScreen({ navigation }: any) {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Period</Text>
               <TouchableOpacity onPress={() => setShowPeriodModal(false)} style={styles.modalClose}>
-                <Filter size={24} color="#64748b" />
+                <Icon name="close" size={24} color="#64748b" />
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>

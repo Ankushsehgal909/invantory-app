@@ -3,6 +3,7 @@ import { View, Text, FlatList, ScrollView, TouchableOpacity, StyleSheet, TextInp
 import { SafeAreaView } from '../components/SafeAreaView';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Package, Search, Filter, Plus, ChevronRight, Edit, Trash2, Download, ArrowDown, ArrowUp, Clock, CheckCircle, XCircle, DollarSign, ShoppingCart } from 'lucide-react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { apiHelpers } from '../services/api';
 import { formatCurrencyMajor as formatCurrency, formatDate } from '@shopstock/shared/utils';
 import { PaymentMethod, InvoiceStatus } from '@shopstock/shared/types';
@@ -187,7 +188,7 @@ export function SalesScreen({ navigation }: any) {
                 {editingSale ? 'Edit Sale' : 'Create Sale'}
               </Text>
               <TouchableOpacity onPress={() => { setShowModal(false); setEditingSale(null); }} style={styles.modalClose}>
-                <ChevronRight size={24} color="#64748b" />
+                <Icon name="close" size={24} color="#64748b" />
               </TouchableOpacity>
             </View>
             <SaleForm

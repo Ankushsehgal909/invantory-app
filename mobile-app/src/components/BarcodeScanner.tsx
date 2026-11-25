@@ -7,6 +7,7 @@ import {
   useCodeScanner,
 } from 'react-native-vision-camera';
 import { ScanLine } from 'lucide-react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 interface BarcodeScannerProps {
   onScan: (barcode: string) => void;
@@ -93,7 +94,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
       {/* Close button */}
       <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-        <Text style={styles.closeButtonIcon}>✕</Text>
+        <Icon name="close" size={24} color="#fff" />
       </TouchableOpacity>
 
       {/* Torch toggle */}

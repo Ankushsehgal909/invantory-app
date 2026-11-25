@@ -3,6 +3,7 @@ import { View, Text, FlatList, ScrollView, TouchableOpacity, StyleSheet, TextInp
 import { SafeAreaView } from '../components/SafeAreaView';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Users, Search, Filter, Plus, ChevronRight, Edit, Trash2, Phone, Mail, MapPin, DollarSign, AlertTriangle, Clock } from 'lucide-react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { apiHelpers } from '../services/api';
 import { formatCurrencyMajor as formatCurrency, formatDate } from '@shopstock/shared/utils';
 
@@ -177,7 +178,7 @@ export function CustomersScreen({ navigation }: any) {
                 {editingCustomer ? 'Edit Customer' : 'Add Customer'}
               </Text>
               <TouchableOpacity onPress={() => { setShowModal(false); setEditingCustomer(null); }} style={styles.modalClose}>
-                <ChevronRight size={24} color="#64748b" />
+                <Icon name="close" size={24} color="#64748b" />
               </TouchableOpacity>
             </View>
             <CustomerForm

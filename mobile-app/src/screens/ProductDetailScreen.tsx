@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, Modal,
 import { SafeAreaView } from '../components/SafeAreaView';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Package, Edit, Trash2, ChevronLeft, Barcode, AlertTriangle, Eye, Plus, Minus, Download, Upload } from 'lucide-react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { apiHelpers } from '../services/api';
 import { formatCurrencyMajor as formatCurrency, formatDate } from '@shopstock/shared/utils';
 
@@ -292,7 +293,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Edit Product</Text>
               <TouchableOpacity onPress={() => { setShowEditModal(false); setEditingProduct(null); }} style={styles.modalClose}>
-                <Eye size={24} color="#64748b" />
+                <Icon name="close" size={24} color="#64748b" />
               </TouchableOpacity>
             </View>
             <ProductForm

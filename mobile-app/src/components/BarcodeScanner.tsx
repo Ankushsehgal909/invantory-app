@@ -1,7 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, PermissionsAndroid, Alert } from 'react-native';
-import { Camera, useCameraDevices, useCameraPermission, useFrameProcessor } from 'react-native-vision-camera';
-import { ScanLine, Barcode } from 'lucide-react-native';
+import React, { useRef, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import {
+  Camera,
+  useCameraDevice,
+  useCameraPermission,
+  useCodeScanner,
+} from 'react-native-vision-camera';
+import { ScanLine } from 'lucide-react-native';
 
 interface BarcodeScannerProps {
   onScan: (barcode: string) => void;
@@ -9,66 +14,45 @@ interface BarcodeScannerProps {
 }
 
 export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
-  const devices = useCameraDevices('wide-angle-camera');
-  const device = devices.back;
-  const [hasPermission, setHasPermission] = useState(false);
+  const device = useCameraDevice('back');
+  const { hasPermission, requestPermission } = useCameraPermission();
   const [scanned, setScanned] = useState(false);
+  const [torchOn, setTorchOn] = useState(false);
   const scannedCodesRef = useRef<Set<string>>(new Set());
 
-  const permission = useCameraPermission(device);
-
-  useEffect(() => {
-    if (permission === 'authorized') {
-      setHasPermission(true);
-    } else if (permission === 'denied') {
-      setHasPermission(false);
-      Alert.alert('Camera permission required', 'Please enable camera access in settings to scan barcodes.');
-    }
-  }, [permission]);
-
-  // Request permission on Android
-  const requestPermission = async () => {
-    if (Platform.OS === 'android') {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.CAMERA,
-        {
-          title: 'Camera Permission',
-          message: 'ShopStock needs camera access to scan barcodes',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        }
+  const handleRequestPermission = async () => {
+    const granted = await requestPermission();
+    if (!granted) {
+      Alert.alert(
+        'Camera permission required',
+        'Please enable camera access in settings to scan barcodes.',
       );
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        setHasPermission(true);
-      }
     }
   };
 
-  const frameProcessor = useFrameProcessor((frame) => {
-    'worklet';
-    if (scanned) return;
-
-    const barcodes = frame.barcodes;
-    if (barcodes && barcodes.length > 0) {
-      for (const barcode of barcodes) {
-        if (barcode.value && !scannedCodesRef.current.has(barcode.value)) {
-          scannedCodesRef.current.add(barcode.value);
+  const codeScanner = useCodeScanner({
+    codeTypes: ['qr', 'ean-13', 'ean-8', 'code-128', 'code-39', 'upc-a', 'upc-e'],
+    onCodeScanned: (codes) => {
+      if (scanned) {
+        return;
+      }
+      for (const code of codes) {
+        if (code.value && !scannedCodesRef.current.has(code.value)) {
+          scannedCodesRef.current.add(code.value);
           setScanned(true);
-          // Use runOnJS to call the JS callback
-          // Note: In a real implementation, you'd use runOnJS from reanimated
-          console.log('Scanned barcode:', barcode.value);
+          onScan(code.value);
+          break;
         }
       }
-    }
-  }, [scanned]);
+    },
+  });
 
   if (!device) {
     return (
       <View style={styles.container}>
         <Text style={styles.errorText}>No camera device found</Text>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <Text style={styles.closeButtonText}>Close</Text>
+        <TouchableOpacity onPress={onClose} style={styles.secondaryButton}>
+          <Text style={styles.secondaryButtonText}>Close</Text>
         </TouchableOpacity>
       </View>
     );
@@ -78,7 +62,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
     return (
       <View style={styles.container}>
         <Text style={styles.errorText}>Camera permission required</Text>
-        <TouchableOpacity onPress={requestPermission} style={styles.primaryButton}>
+        <TouchableOpacity onPress={handleRequestPermission} style={styles.primaryButton}>
           <Text style={styles.primaryButtonText}>Grant Permission</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={onClose} style={styles.secondaryButton}>
@@ -93,9 +77,9 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
       <Camera
         style={StyleSheet.absoluteFill}
         device={device}
-        isActive={true}
-        frameProcessor={frameProcessor}
-        frameProcessorFps={15}
+        isActive={!scanned}
+        codeScanner={codeScanner}
+        torch={torchOn ? 'on' : 'off'}
       />
 
       {/* Scan overlay */}
@@ -109,20 +93,18 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
       {/* Close button */}
       <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-        <View style={styles.closeButtonIcon}>
-          <Text>✕</Text>
-        </View>
+        <Text style={styles.closeButtonIcon}>✕</Text>
       </TouchableOpacity>
 
       {/* Torch toggle */}
-      <TouchableOpacity
-        onPress={() => device.setTorchMode(device.torchMode === 'on' ? 'off' : 'on')}
-        style={styles.torchButton}
-      >
-        <Text style={styles.torchButtonText}>
-          {device.torchMode === 'on' ? '🔦' : '💡'}
-        </Text>
-      </TouchableOpacity>
+      {device.hasTorch && (
+        <TouchableOpacity
+          onPress={() => setTorchOn((prev) => !prev)}
+          style={styles.torchButton}
+        >
+          <Text style={styles.torchButtonText}>{torchOn ? '🔦' : '💡'}</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -131,6 +113,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   overlay: {
     flex: 1,

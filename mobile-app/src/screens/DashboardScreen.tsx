@@ -295,48 +295,6 @@ const styles = StyleSheet.create({
     color: '#1e293b',
     marginBottom: 16,
   },
-});
-
-const statsGridStyles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-  },
-  cardSkeleton: {
-    height: 80,
-  },
-  cardHeader: {
-    marginBottom: 12,
-  },
-  iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  value: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1e293b',
-    marginBottom: 4,
-  },
-  label: {
-    fontSize: 13,
-    color: '#64748b',
-  },
   actionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -416,5 +374,47 @@ const statsGridStyles = StyleSheet.create({
   financialValue: {
     fontSize: 20,
     fontWeight: '700',
+  },
+});
+
+const statsGridStyles = StyleSheet.create({
+  container: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  cardSkeleton: {
+    height: 80,
+  },
+  cardHeader: {
+    marginBottom: 12,
+  },
+  iconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  value: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: 4,
+  },
+  label: {
+    fontSize: 13,
+    color: '#64748b',
   },
 });

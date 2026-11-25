@@ -117,7 +117,7 @@ export function LoginScreen() {
           />
 
           <TouchableOpacity
-            onPress={handleSubmit(onSubmit)}
+            onPress={() => handleSubmit(onSubmit)()}
             disabled={isLoading}
             style={[
               styles.submitButton,

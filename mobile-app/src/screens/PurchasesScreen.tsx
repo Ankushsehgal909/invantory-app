@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, RefreshControl, SafeAreaView, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, ScrollView, TouchableOpacity, StyleSheet, TextInput, RefreshControl, SafeAreaView, Modal, ActivityIndicator } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Package, Search, Filter, Plus, ChevronRight, Edit, Trash2, Download, ArrowDown, ArrowUp, Clock, CheckCircle, XCircle, DollarSign, Truck } from 'lucide-react-native';
 import { apiHelpers } from '../services/api';
@@ -59,7 +59,7 @@ export function PurchasesScreen({ navigation }: any) {
 
   const renderItem = ({ item }: { item: any }) => {
     const status = statusConfig[item.status] || statusConfig.draft;
-    const statusIcon = status.icon;
+    const StatusIcon = status.icon;
     return (
       <TouchableOpacity
         style={styles.purchaseCard}
@@ -67,7 +67,7 @@ export function PurchasesScreen({ navigation }: any) {
       >
         <View style={styles.purchaseLeft}>
           <View style={[styles.purchaseIcon, { backgroundColor: status.color + '20' }]}>
-            <statusIcon size={24} color={status.color} />
+            <StatusIcon size={24} color={status.color} />
           </View>
           <View style={styles.purchaseInfo}>
             <View style={styles.purchaseHeader}>
@@ -180,7 +180,7 @@ export function PurchasesScreen({ navigation }: any) {
             <PurchaseForm
               purchase={editingPurchase}
               onClose={() => { setShowModal(false); setEditingPurchase(null); }}
-              onSubmit={(data) => {
+              onSubmit={(_data: any) => {
                 // TODO: Implement create/update
                 setShowModal(false);
                 setEditingPurchase(null);

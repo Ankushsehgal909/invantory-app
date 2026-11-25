@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, RefreshControl, SafeAreaView, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, ScrollView, TouchableOpacity, StyleSheet, TextInput, RefreshControl, SafeAreaView, Modal, ActivityIndicator } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Package, Search, Filter, Plus, ChevronRight, Edit, Trash2, Barcode, AlertTriangle, Eye } from 'lucide-react-native';
 import { apiHelpers } from '../services/api';
@@ -180,7 +180,7 @@ export function ProductsScreen({ navigation }: any) {
             <ProductForm
               product={editingProduct}
               onClose={() => { setShowModal(false); setEditingProduct(null); }}
-              onSubmit={(data) => {
+              onSubmit={(_data: any) => {
                 // TODO: Implement create/update
                 setShowModal(false);
                 setEditingProduct(null);

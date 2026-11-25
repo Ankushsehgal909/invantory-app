@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, RefreshControl, SafeAreaView, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, ScrollView, TouchableOpacity, StyleSheet, TextInput, RefreshControl, SafeAreaView, Modal, ActivityIndicator } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Users, Search, Filter, Plus, ChevronRight, Edit, Trash2, Phone, Mail, MapPin, DollarSign, AlertTriangle, Clock } from 'lucide-react-native';
 import { apiHelpers } from '../services/api';
@@ -182,7 +182,7 @@ export function CustomersScreen({ navigation }: any) {
             <CustomerForm
               customer={editingCustomer}
               onClose={() => { setShowModal(false); setEditingCustomer(null); }}
-              onSubmit={(data) => {
+              onSubmit={(_data: any) => {
                 // TODO: Implement create/update
                 setShowModal(false);
                 setEditingCustomer(null);

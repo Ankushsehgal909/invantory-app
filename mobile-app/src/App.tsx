@@ -16,7 +16,7 @@ import { ReportsScreen } from './screens/ReportsScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { Home, Package, ShoppingCart, Users, FileText, Settings as SettingsIcon } from 'lucide-react-native';
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<any>();
 const Tab = createBottomTabNavigator();
 
 const queryClient = new QueryClient({
@@ -86,9 +86,8 @@ function AppNavigator() {
       screenOptions={{
         headerStyle: {
           backgroundColor: '#fff',
-          borderBottomWidth: 1,
-          borderBottomColor: '#e2e8f0',
         },
+        headerShadowVisible: false,
         headerTitleStyle: {
           fontWeight: '600',
         },
@@ -98,7 +97,7 @@ function AppNavigator() {
       {user ? (
         <>
           <Stack.Screen name="Main" component={TabNavigator} />
-          <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ title: 'Product Details' }} />
+          <Stack.Screen name="ProductDetail" component={ProductDetailScreen as React.ComponentType<any>} options={{ title: 'Product Details' }} />
           <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
         </>
       ) : (

@@ -99,6 +99,8 @@ enum PaymentMethod {
 
 enum InvoiceStatus {
   DRAFT
+  PENDING
+  COMPLETED
   FINALIZED
   CANCELLED
   REFUNDED

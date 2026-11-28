@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, RefreshControl, SafeAreaView, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, ScrollView, TouchableOpacity, StyleSheet, TextInput, RefreshControl, Modal, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from '../components/SafeAreaView';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Package, Search, Filter, Plus, ChevronRight, Edit, Trash2, Barcode, AlertTriangle, Eye } from 'lucide-react-native';
+import { Package, Search, Filter, Plus, ChevronRight, Edit, Trash2, Barcode, AlertTriangle, Eye, ScanLine } from 'lucide-react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { apiHelpers } from '../services/api';
 import { formatCurrencyMajor as formatCurrency } from '@shopstock/shared/utils';
+import { BarcodeScanner } from '../components/BarcodeScanner';
 
 export function ProductsScreen({ navigation }: any) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -77,14 +81,18 @@ export function ProductsScreen({ navigation }: any) {
           <Text style={styles.stockLabel}>Stock</Text>
           <Text style={[
             styles.stockValue,
-            item.totalStock <= 0 ? styles.stockOut : item.totalStock <= (item.reorderLevel || 10) ? styles.stockLow : styles.stockNormal,
+            (item.currentStock ?? item.totalStock ?? 0) <= 0
+              ? styles.stockOut
+              : (item.currentStock ?? item.totalStock ?? 0) <= (item.reorderLevel || 10)
+              ? styles.stockLow
+              : styles.stockNormal,
           ]}>
-            {item.totalStock} {item.baseUnit}
+            {item.currentStock ?? item.totalStock ?? 0} {item.baseUnit || item.unit || 'pcs'}
           </Text>
         </View>
         <View style={styles.priceInfo}>
           <Text style={styles.priceLabel}>Sale Price</Text>
-          <Text style={styles.priceValue}>{formatCurrency(item.salePrice)}</Text>
+          <Text style={styles.priceValue}>{formatCurrency(item.sellingPrice ?? item.salePrice ?? 0)}</Text>
         </View>
         <ChevronRight size={20} color="#94a3b8" />
       </View>
@@ -136,6 +144,13 @@ export function ProductsScreen({ navigation }: any) {
             placeholderTextColor="#94a3b8"
           />
         </View>
+        <TouchableOpacity
+          onPress={() => setShowScanner(true)}
+          style={styles.filterButton}
+          accessibilityLabel="Scan barcode"
+        >
+          <ScanLine size={20} color="#0284C7" />
+        </TouchableOpacity>
         <TouchableOpacity style={styles.filterButton}>
           <Filter size={20} color="#64748b" />
         </TouchableOpacity>
@@ -174,13 +189,13 @@ export function ProductsScreen({ navigation }: any) {
                 {editingProduct ? 'Edit Product' : 'Add Product'}
               </Text>
               <TouchableOpacity onPress={() => { setShowModal(false); setEditingProduct(null); }} style={styles.modalClose}>
-                <Eye size={24} color="#64748b" />
+                <Icon name="close" size={24} color="#64748b" />
               </TouchableOpacity>
             </View>
             <ProductForm
               product={editingProduct}
               onClose={() => { setShowModal(false); setEditingProduct(null); }}
-              onSubmit={(data) => {
+              onSubmit={(_data: any) => {
                 // TODO: Implement create/update
                 setShowModal(false);
                 setEditingProduct(null);
@@ -210,6 +225,16 @@ export function ProductsScreen({ navigation }: any) {
             </View>
           </View>
         </View>
+      </Modal>
+      {/* Barcode Scanner Modal */}
+      <Modal visible={showScanner} animationType="slide">
+        <BarcodeScanner
+          onScan={(barcode) => {
+            setSearch(barcode);
+            setShowScanner(false);
+          }}
+          onClose={() => setShowScanner(false)}
+        />
       </Modal>
     </SafeAreaView>
   );
@@ -374,7 +399,7 @@ const styles = StyleSheet.create({
   emptyActionText: { fontSize: 16, fontWeight: '600', color: '#fff' },
   skeletonCard: { height: 80, backgroundColor: '#fff', borderRadius: 12, marginHorizontal: 20, marginBottom: 12 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalContainer: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '85%' },
+  modalContainer: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, height: '85%', maxHeight: '90%' },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, borderBottomWidth: 1, borderBottomColor: '#e2e8f0' },
   modalTitle: { fontSize: 18, fontWeight: '600', color: '#1e293b' },
   modalClose: { padding: 4 },

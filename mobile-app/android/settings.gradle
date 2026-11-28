@@ -1,4 +1,10 @@
+pluginManagement {
+    includeBuild(new File(["node", "--print", "require.resolve('@react-native/gradle-plugin/package.json')"].execute(null, rootDir).text.trim()).getParentFile().toString())
+}
+plugins { id("com.facebook.react.settings") }
+extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
 rootProject.name = 'ShopStock'
+<<<<<<< HEAD
 
 def cliPlatformAndroidGradle = file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
 if (!cliPlatformAndroidGradle.exists()) {
@@ -14,3 +20,7 @@ if (!gradlePlugin.exists()) {
     gradlePlugin = file("../../node_modules/@react-native/gradle-plugin")
 }
 includeBuild(gradlePlugin)
+=======
+include ':app'
+includeBuild(new File(["node", "--print", "require.resolve('@react-native/gradle-plugin/package.json')"].execute(null, rootDir).text.trim()).getParentFile().toString())
+>>>>>>> 9f5a3f15af6ffa0c4dc4ebdfd119263ba4f600fb

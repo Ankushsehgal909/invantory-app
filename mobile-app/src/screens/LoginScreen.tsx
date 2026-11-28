@@ -10,7 +10,7 @@ interface LoginForm {
   password: string;
 }
 
-export function LoginScreen() {
+export function LoginScreen({ navigation }: any) {
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -60,11 +60,14 @@ export function LoginScreen() {
                 message: 'Please enter a valid phone number',
               },
             }}
-            render={({ field }) => (
+            render={({ field: { onChange, onBlur, value } }) => (
               <View style={styles.inputContainer}>
                 <TextInput
-                  {...field}
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
                   placeholder="Enter your phone number"
+                  placeholderTextColor="#94a3b8"
                   keyboardType="phone-pad"
                   autoCapitalize="none"
                   autoComplete="tel"
@@ -90,11 +93,14 @@ export function LoginScreen() {
                 message: 'Password must be at least 8 characters',
               },
             }}
-            render={({ field }) => (
+            render={({ field: { onChange, onBlur, value } }) => (
               <View style={styles.inputContainer}>
                 <TextInput
-                  {...field}
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
                   placeholder="Enter your password"
+                  placeholderTextColor="#94a3b8"
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   autoComplete="current-password"
@@ -117,7 +123,7 @@ export function LoginScreen() {
           />
 
           <TouchableOpacity
-            onPress={handleSubmit(onSubmit)}
+            onPress={() => handleSubmit(onSubmit)()}
             disabled={isLoading}
             style={[
               styles.submitButton,
@@ -132,10 +138,11 @@ export function LoginScreen() {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.demoText}>
-          <Text style={styles.demoLabel}>No demo user seeded:</Text>
-          <Text style={styles.demoValue}>Create a user via API or seed script first</Text>
-          <Text style={{...styles.demoValue, color: '#64748b', fontSize: 12, marginTop: 4}}>(Login expects a registered phone number)</Text>
+        <View style={styles.registerRow}>
+          <Text style={styles.demoLabel}>Don't have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+            <Text style={styles.registerLink}>Create Account</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -242,5 +249,16 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
     color: '#0ea5e9',
     marginTop: 4,
+  },
+  registerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 24,
+  },
+  registerLink: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#0ea5e9',
   },
 });

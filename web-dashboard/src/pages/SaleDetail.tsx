@@ -86,8 +86,11 @@ export function SaleDetail({ initialInvoice }: SaleDetailProps) {
   const getStatusBadge = (status: string) => {
     const badges: Record<string, { class: string; icon: any }> = {
       DRAFT: { class: 'bg-gray-100 text-gray-800', icon: AlertCircle },
+      PENDING: { class: 'bg-amber-100 text-amber-800', icon: AlertCircle },
+      COMPLETED: { class: 'bg-green-100 text-green-800', icon: CheckCircle },
       FINALIZED: { class: 'bg-blue-100 text-blue-800', icon: CheckCircle },
       CANCELLED: { class: 'bg-red-100 text-red-800', icon: XCircle },
+      REFUNDED: { class: 'bg-purple-100 text-purple-800', icon: RotateCcw },
       RETURNED: { class: 'bg-purple-100 text-purple-800', icon: RotateCcw },
     };
     return badges[status] || { class: 'bg-gray-100 text-gray-800', icon: AlertCircle };

@@ -92,6 +92,8 @@ export enum PaymentMethod {
 
 export enum InvoiceStatus {
   DRAFT = 'DRAFT',
+  PENDING = 'PENDING',
+  COMPLETED = 'COMPLETED',
   FINALIZED = 'FINALIZED',
   CANCELLED = 'CANCELLED',
   REFUNDED = 'REFUNDED',

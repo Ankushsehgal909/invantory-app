@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, SafeAreaView } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
+import { SafeAreaView } from '../components/SafeAreaView';
 import { useQuery } from '@tanstack/react-query';
-import { Package, DollarSign, TrendingUp, ShoppingCart, Truck, AlertTriangle, Users, Plus, Download, Upload } from 'lucide-react-native';
+import { Package, DollarSign, TrendingUp, ShoppingCart, Truck, AlertTriangle, Users, Plus, Download, Upload, Settings as SettingsIcon } from 'lucide-react-native';
 import { apiHelpers } from '../services/api';
 import { formatCurrencyMajor as formatCurrency } from '@shopstock/shared/utils';
 
@@ -71,10 +72,18 @@ export function DashboardScreen({ navigation }: any) {
           </View>
           <View style={styles.headerRight}>
             <TouchableOpacity
+              onPress={() => navigation.navigate('Settings')}
+              style={styles.settingsButton}
+              accessibilityLabel="Open settings"
+            >
+              <SettingsIcon size={20} color="#0F172A" />
+            </TouchableOpacity>
+            <TouchableOpacity
               onPress={() => navigation.navigate('Products', { new: true })}
               style={styles.fab}
+              accessibilityLabel="Add product"
             >
-              <Plus size={24} color="#fff" />
+              <Plus size={22} color="#fff" />
             </TouchableOpacity>
           </View>
         </View>
@@ -234,29 +243,38 @@ const styles = StyleSheet.create({
   headerLeft: {
     flex: 1,
   },
-  headerRight: {},
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  settingsButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#1e293b',
+    color: '#0F172A',
   },
   subtitle: {
     fontSize: 14,
-    color: '#64748b',
+    color: '#64748B',
     marginTop: 2,
   },
   fab: {
     width: 44,
     height: 44,
-    borderRadius: 22,
-    backgroundColor: '#0ea5e9',
+    borderRadius: 12,
+    backgroundColor: '#0284C7',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#0ea5e9',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
   },
   periodSelector: {
     flexDirection: 'row',
@@ -274,8 +292,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   periodButtonActive: {
-    backgroundColor: '#0ea5e9',
-    borderColor: '#0ea5e9',
+    backgroundColor: '#0284C7',
+    borderColor: '#0284C7',
   },
   periodButtonText: {
     fontSize: 14,
@@ -294,48 +312,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1e293b',
     marginBottom: 16,
-  },
-});
-
-const statsGridStyles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-  },
-  cardSkeleton: {
-    height: 80,
-  },
-  cardHeader: {
-    marginBottom: 12,
-  },
-  iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  value: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1e293b',
-    marginBottom: 4,
-  },
-  label: {
-    fontSize: 13,
-    color: '#64748b',
   },
   actionsGrid: {
     flexDirection: 'row',
@@ -416,5 +392,47 @@ const statsGridStyles = StyleSheet.create({
   financialValue: {
     fontSize: 20,
     fontWeight: '700',
+  },
+});
+
+const statsGridStyles = StyleSheet.create({
+  container: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  card: {
+    width: '48%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  cardSkeleton: {
+    height: 76,
+  },
+  cardHeader: {
+    marginBottom: 10,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  value: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 4,
+  },
+  label: {
+    fontSize: 13,
+    color: '#64748B',
   },
 });

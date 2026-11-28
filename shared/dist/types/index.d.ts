@@ -78,6 +78,8 @@ export declare enum PaymentMethod {
 }
 export declare enum InvoiceStatus {
     DRAFT = "DRAFT",
+    PENDING = "PENDING",
+    COMPLETED = "COMPLETED",
     FINALIZED = "FINALIZED",
     CANCELLED = "CANCELLED",
     REFUNDED = "REFUNDED"

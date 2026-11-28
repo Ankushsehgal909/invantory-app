@@ -3,9 +3,12 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Provider as PaperProvider } from 'react-native-paper';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { colors, paperTheme } from './theme';
 import { LoginScreen } from './screens/LoginScreen';
+import { RegisterScreen } from './screens/RegisterScreen';
 import { DashboardScreen } from './screens/DashboardScreen';
 import { ProductsScreen } from './screens/ProductsScreen';
 import { ProductDetailScreen } from './screens/ProductDetailScreen';
@@ -16,7 +19,7 @@ import { ReportsScreen } from './screens/ReportsScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { Home, Package, ShoppingCart, Users, FileText, Settings as SettingsIcon } from 'lucide-react-native';
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<any>();
 const Tab = createBottomTabNavigator();
 
 const queryClient = new QueryClient({
@@ -49,12 +52,19 @@ function TabNavigator() {
           const Icon = tab.icon;
           return <Icon size={size} color={color} strokeWidth={focused ? 2.5 : 2} />;
         },
-        tabBarActiveTintColor: '#0ea5e9',
-        tabBarInactiveTintColor: '#94a3b8',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.placeholder,
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+          marginTop: 2,
+        },
         tabBarStyle: {
-          backgroundColor: '#fff',
+          backgroundColor: colors.surface,
           borderTopWidth: 1,
-          borderTopColor: '#e2e8f0',
+          borderTopColor: colors.border,
+          height: 64,
+          paddingTop: 6,
           paddingBottom: 8,
         },
         headerShown: false,
@@ -86,9 +96,8 @@ function AppNavigator() {
       screenOptions={{
         headerStyle: {
           backgroundColor: '#fff',
-          borderBottomWidth: 1,
-          borderBottomColor: '#e2e8f0',
         },
+        headerShadowVisible: false,
         headerTitleStyle: {
           fontWeight: '600',
         },
@@ -97,12 +106,15 @@ function AppNavigator() {
     >
       {user ? (
         <>
-          <Stack.Screen name="Main" component={TabNavigator} />
-          <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ title: 'Product Details' }} />
+          <Stack.Screen name="Main" component={TabNavigator} options={{ headerShown: false }} />
+          <Stack.Screen name="ProductDetail" component={ProductDetailScreen as React.ComponentType<any>} options={{ title: 'Product Details' }} />
           <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
         </>
       ) : (
-        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+        <>
+          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
+        </>
       )}
     </Stack.Navigator>
   );
@@ -110,14 +122,16 @@ function AppNavigator() {
 
 export default function App() {
   return (
-    <PaperProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <NavigationContainer>
-            <AppNavigator />
-          </NavigationContainer>
-        </AuthProvider>
-      </QueryClientProvider>
-    </PaperProvider>
+    <SafeAreaProvider>
+      <PaperProvider theme={paperTheme}>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <NavigationContainer>
+              <AppNavigator />
+            </NavigationContainer>
+          </AuthProvider>
+        </QueryClientProvider>
+      </PaperProvider>
+    </SafeAreaProvider>
   );
 }

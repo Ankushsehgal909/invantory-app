@@ -1,11 +1,20 @@
 buildscript {
     ext {
+<<<<<<< HEAD
         buildToolsVersion = "34.0.0"
         minSdkVersion = 23
         compileSdkVersion = 34
         targetSdkVersion = 34
         ndkVersion = "25.1.8937393"
         kotlinVersion = "1.8.0"
+=======
+        buildToolsVersion = "37.0.0"
+        minSdkVersion = 24
+        compileSdkVersion = 37
+        targetSdkVersion = 36
+        ndkVersion = "27.1.12297006"
+        kotlinVersion = "2.2.0"
+>>>>>>> 9f5a3f15af6ffa0c4dc4ebdfd119263ba4f600fb
     }
     repositories {
         google()
@@ -19,9 +28,12 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+<<<<<<< HEAD
 
 allprojects {
     repositories {
         maven { url 'https://www.jitpack.io' }
     }
 }
+=======
+>>>>>>> 9f5a3f15af6ffa0c4dc4ebdfd119263ba4f600fb

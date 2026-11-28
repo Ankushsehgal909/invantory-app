@@ -4,20 +4,28 @@ import * as Keychain from 'react-native-keychain';
 import { api } from '../services/api';
 import { User, Shop } from '@shopstock/shared/types';
 
+interface RegisterPayload {
+  name: string;
+  phone: string;
+  email?: string;
+  password: string;
+  shopName: string;
+}
+
 interface AuthContextType {
   user: User | null;
   shop: Shop | null;
   loading: boolean;
   login: (phone: string, password: string, shopId?: string) => Promise<void>;
+  register: (payload: RegisterPayload) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const KEYCHAIN_SERVICE = 'shopstock';
-const ACCESS_TOKEN_ACCOUNT = 'accessToken';
-const REFRESH_TOKEN_ACCOUNT = 'refreshToken';
+const ACCESS_TOKEN_SERVICE = 'shopstock.accessToken';
+const REFRESH_TOKEN_SERVICE = 'shopstock.refreshToken';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -30,7 +38,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(response.data.data.user);
     } catch {
       setUser(null);
-      await Keychain.resetGenericPassword({ service: KEYCHAIN_SERVICE });
+      await Keychain.resetGenericPassword({ service: ACCESS_TOKEN_SERVICE });
+      await Keychain.resetGenericPassword({ service: REFRESH_TOKEN_SERVICE });
       delete api.defaults.headers.common['Authorization'];
     }
   }, []);
@@ -39,8 +48,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const response = await api.post('/auth/login', { phone, password, shopId });
     const { user: userData, accessToken, refreshToken, shop: shopData } = response.data.data;
 
-    await Keychain.setGenericPassword(ACCESS_TOKEN_ACCOUNT, accessToken, { service: KEYCHAIN_SERVICE });
-    await Keychain.setGenericPassword(REFRESH_TOKEN_ACCOUNT, refreshToken, { service: KEYCHAIN_SERVICE });
+    await Keychain.setGenericPassword('accessToken', accessToken, { service: ACCESS_TOKEN_SERVICE });
+    await Keychain.setGenericPassword('refreshToken', refreshToken, { service: REFRESH_TOKEN_SERVICE });
+    api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+
+    setUser(userData);
+    setShop(shopData);
+  };
+
+  const register = async (payload: RegisterPayload) => {
+    const response = await api.post('/auth/register', payload);
+    const { user: userData, accessToken, refreshToken, shop: shopData } = response.data.data;
+
+    await Keychain.setGenericPassword('accessToken', accessToken, { service: ACCESS_TOKEN_SERVICE });
+    await Keychain.setGenericPassword('refreshToken', refreshToken, { service: REFRESH_TOKEN_SERVICE });
     api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
 
     setUser(userData);
@@ -48,7 +69,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    await Keychain.resetGenericPassword({ service: KEYCHAIN_SERVICE });
+    await Keychain.resetGenericPassword({ service: ACCESS_TOKEN_SERVICE });
+    await Keychain.resetGenericPassword({ service: REFRESH_TOKEN_SERVICE });
     delete api.defaults.headers.common['Authorization'];
     setUser(null);
     setShop(null);
@@ -56,11 +78,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const initAuth = async () => {
-      const accessTokenCreds = await Keychain.getGenericPassword({ service: KEYCHAIN_SERVICE, account: ACCESS_TOKEN_ACCOUNT });
-      const refreshTokenCreds = await Keychain.getGenericPassword({ service: KEYCHAIN_SERVICE, account: REFRESH_TOKEN_ACCOUNT });
+      const accessTokenCreds = await Keychain.getGenericPassword({ service: ACCESS_TOKEN_SERVICE });
+      const refreshTokenCreds = await Keychain.getGenericPassword({ service: REFRESH_TOKEN_SERVICE });
 
-      const accessToken = accessTokenCreds?.password;
-      const refreshToken = refreshTokenCreds?.password;
+      const accessToken = accessTokenCreds ? accessTokenCreds.password : undefined;
+      const refreshToken = refreshTokenCreds ? refreshTokenCreds.password : undefined;
 
       if (accessToken) {
         api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
@@ -71,8 +93,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             try {
               const response = await api.post('/auth/refresh', { refreshToken });
               const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data.data;
-              await Keychain.setGenericPassword(ACCESS_TOKEN_ACCOUNT, newAccessToken, { service: KEYCHAIN_SERVICE });
-              await Keychain.setGenericPassword(REFRESH_TOKEN_ACCOUNT, newRefreshToken, { service: KEYCHAIN_SERVICE });
+              await Keychain.setGenericPassword('accessToken', newAccessToken, { service: ACCESS_TOKEN_SERVICE });
+              await Keychain.setGenericPassword('refreshToken', newRefreshToken, { service: REFRESH_TOKEN_SERVICE });
               api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
               await refreshUser();
             } catch {
@@ -90,7 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refreshUser]);
 
   return (
-    <AuthContext.Provider value={{ user, shop, loading, login, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, shop, loading, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

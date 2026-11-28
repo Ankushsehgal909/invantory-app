@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, Switch, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Switch, Alert } from 'react-native';
+import { SafeAreaView } from '../components/SafeAreaView';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Settings as SettingsIcon, User, Bell, Palette, Shield, LogOut, Info, Moon, Sun, Language, Key, Download, Upload, Trash2, ChevronRight, FileText, Edit, MapPin, Phone, Mail } from 'lucide-react-native';
+import { Settings as SettingsIcon, User, Bell, Palette, Shield, LogOut, Info, Moon, Sun, Languages, Key, Download, Upload, Trash2, ChevronRight, FileText, Edit, MapPin, Phone, Mail } from 'lucide-react-native';
 import { apiHelpers } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrencyMajor as formatCurrency } from '@shopstock/shared/utils';
@@ -69,8 +70,8 @@ export function SettingsScreen({ navigation }: any) {
               <Text style={styles.profileName}>{user?.name || 'User'}</Text>
               <Text style={styles.profileEmail}>{user?.phone || user?.email || 'Phone not set'}</Text>
               <View style={styles.profileRole}>
-                <Text style={[styles.roleBadge, { backgroundColor: getRoleColor(user?.role) + '20' }]}>
-                  <Text style={[styles.roleText, { color: getRoleColor(user?.role) }]}>
+                <Text style={[styles.roleBadge, { backgroundColor: getRoleColor(user?.role || '') + '20' }]}>
+                  <Text style={[styles.roleText, { color: getRoleColor(user?.role || '') }]}>
                     {user?.role || 'Staff'}
                   </Text>
                 </Text>
@@ -127,7 +128,7 @@ export function SettingsScreen({ navigation }: any) {
                 </View>
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>GSTIN</Text>
-                  <Text style={styles.infoValue}>{shop.gstin || 'Not set'}</Text>
+                  <Text style={styles.infoValue}>{(shop as any).gstin || 'Not set'}</Text>
                 </View>
               </View>
             </View>
@@ -159,7 +160,7 @@ export function SettingsScreen({ navigation }: any) {
             <View style={styles.settingRow}>
               <View style={styles.settingLeft}>
                 <View style={[styles.settingIcon, { backgroundColor: '#0ea5e920' }]}>
-                  <Language size={20} color="#0ea5e9" />
+                  <Languages size={20} color="#0ea5e9" />
                 </View>
                 <View>
                   <Text style={styles.settingLabel}>Language</Text>

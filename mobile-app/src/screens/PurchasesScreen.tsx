@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, RefreshControl, SafeAreaView, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, ScrollView, TouchableOpacity, StyleSheet, TextInput, RefreshControl, Modal, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from '../components/SafeAreaView';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Package, Search, Filter, Plus, ChevronRight, Edit, Trash2, Download, ArrowDown, ArrowUp, Clock, CheckCircle, XCircle, DollarSign, Truck } from 'lucide-react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { apiHelpers } from '../services/api';
 import { formatCurrencyMajor as formatCurrency, formatDate } from '@shopstock/shared/utils';
 
@@ -59,7 +61,7 @@ export function PurchasesScreen({ navigation }: any) {
 
   const renderItem = ({ item }: { item: any }) => {
     const status = statusConfig[item.status] || statusConfig.draft;
-    const statusIcon = status.icon;
+    const StatusIcon = status.icon;
     return (
       <TouchableOpacity
         style={styles.purchaseCard}
@@ -67,7 +69,7 @@ export function PurchasesScreen({ navigation }: any) {
       >
         <View style={styles.purchaseLeft}>
           <View style={[styles.purchaseIcon, { backgroundColor: status.color + '20' }]}>
-            <statusIcon size={24} color={status.color} />
+            <StatusIcon size={24} color={status.color} />
           </View>
           <View style={styles.purchaseInfo}>
             <View style={styles.purchaseHeader}>
@@ -174,13 +176,13 @@ export function PurchasesScreen({ navigation }: any) {
                 {editingPurchase ? 'Edit Purchase' : 'Record Purchase'}
               </Text>
               <TouchableOpacity onPress={() => { setShowModal(false); setEditingPurchase(null); }} style={styles.modalClose}>
-                <ChevronRight size={24} color="#64748b" />
+                <Icon name="close" size={24} color="#64748b" />
               </TouchableOpacity>
             </View>
             <PurchaseForm
               purchase={editingPurchase}
               onClose={() => { setShowModal(false); setEditingPurchase(null); }}
-              onSubmit={(data) => {
+              onSubmit={(_data: any) => {
                 // TODO: Implement create/update
                 setShowModal(false);
                 setEditingPurchase(null);
@@ -372,7 +374,7 @@ const styles = StyleSheet.create({
   emptyActionText: { fontSize: 16, fontWeight: '600', color: '#fff' },
   skeletonCard: { height: 80, backgroundColor: '#fff', borderRadius: 12, marginHorizontal: 20, marginBottom: 12 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalContainer: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '85%' },
+  modalContainer: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, height: '85%', maxHeight: '90%' },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, borderBottomWidth: 1, borderBottomColor: '#e2e8f0' },
   modalTitle: { fontSize: 18, fontWeight: '600', color: '#1e293b' },
   modalClose: { padding: 4 },

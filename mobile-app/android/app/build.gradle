@@ -1,8 +1,10 @@
 apply plugin: "com.android.application"
+apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
 /**
  * This is the configuration block to customize your React Native Android app.
+<<<<<<< HEAD
  */
 react {
     root = file("../../")
@@ -13,20 +15,59 @@ react {
 
 def enableProguardInReleaseBuilds = false
 def jscFlavor = 'org.webkit:android-jsc:+'
+=======
+ * By default you don't need to apply any configuration, just uncomment the lines you need.
+ */
+react {
+    /* Folders */
+    def rnDir = new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()).getParentFile()
+    reactNativeDir = rnDir
+    codegenDir = new File(["node", "--print", "require.resolve('@react-native/codegen/package.json')"].execute(null, rootDir).text.trim()).getParentFile()
+    cliFile = new File(rnDir, "cli.js")
+
+    /* Autolinking */
+    autolinkLibrariesWithApp()
+}
+
+/**
+ * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
+ */
+def enableProguardInReleaseBuilds = false
+
+/**
+ * The preferred build flavor of JavaScriptCore (JSC)
+ *
+ * For example, to use the international variant, you can use:
+ * `def jscFlavor = io.github.react-native-community:jsc-android-intl:2026004.+`
+ *
+ * The international variant includes ICU i18n library and necessary data
+ * allowing to use e.g. `Date.toLocaleString` and `String.localeCompare` that
+ * give correct results when using with locales other than en-US. Note that
+ * this variant is about 6MiB larger per architecture than default.
+ */
+def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
+>>>>>>> 9f5a3f15af6ffa0c4dc4ebdfd119263ba4f600fb
 
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
+<<<<<<< HEAD
     namespace 'com.shopstock.app'
+=======
+    namespace "com.shopstock"
+>>>>>>> 9f5a3f15af6ffa0c4dc4ebdfd119263ba4f600fb
     defaultConfig {
         applicationId "com.shopstock.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+<<<<<<< HEAD
         multiDexEnabled true
+=======
+>>>>>>> 9f5a3f15af6ffa0c4dc4ebdfd119263ba4f600fb
     }
     signingConfigs {
         debug {
@@ -41,11 +82,14 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
+            // Caution! In production, you need to generate your own keystore file.
+            // see https://reactnative.dev/docs/signed-apk-android.
             signingConfig signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
-            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
     }
+<<<<<<< HEAD
     packagingOptions {
         pickFirst '**/libc++_shared.so'
         pickFirst '**/libjsc.so'
@@ -60,6 +104,14 @@ dependencies {
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
     implementation "androidx.multidex:multidex:2.0.1"
 
+=======
+}
+
+dependencies {
+    // The version of react-native is set by the React Native Gradle Plugin
+    implementation("com.facebook.react:react-android")
+
+>>>>>>> 9f5a3f15af6ffa0c4dc4ebdfd119263ba4f600fb
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
     } else {
@@ -67,9 +119,13 @@ dependencies {
     }
 }
 
+<<<<<<< HEAD
 def cliPlatformAndroidGradle = file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
 if (!cliPlatformAndroidGradle.exists()) {
     cliPlatformAndroidGradle = file("../../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
 }
 apply from: cliPlatformAndroidGradle
 applyNativeModulesAppBuildGradle(project)
+=======
+apply from: new File(["node", "--print", "require.resolve('react-native-vector-icons/fonts.gradle')"].execute(null, rootDir).text.trim())
+>>>>>>> 9f5a3f15af6ffa0c4dc4ebdfd119263ba4f600fb
